@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Shopify Agent</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            background: #111;
+            color: white;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+
+        .box{
+            background:#1e1e1e;
+            padding:40px;
+            border-radius:20px;
+            width:400px;
+        }
+
+        input{
+            width:100%;
+            padding:15px;
+            margin-top:10px;
+            margin-bottom:20px;
+            border:none;
+            border-radius:10px;
+        }
+
+        button{
+            width:100%;
+            padding:15px;
+            background:#00c853;
+            color:white;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+            font-size:18px;
+        }
+
+        button:hover{
+            background:#00e676;
+        }
+
+        #result{
+            margin-top:20px;
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <div class="box">
+
+        <h1>AI Shopify Agent 🚀</h1>
+
+        <label>Niche</label>
+        <input type="text" id="niche" placeholder="fitness">
+
+        <label>Nombre de produits</label>
+        <input type="number" id="count" value="3">
+
+        <button onclick="generateProducts()">
+            Générer Produits
+        </button>
+
+        <div id="result"></div>
+
+    </div>
+
+<script>
+
+async function generateProducts(){
+
+    let niche = document.getElementById("niche").value;
+    let count = document.getElementById("count").value;
+
+    document.getElementById("result").innerHTML =
+        "⏳ Génération en cours...";
+
+    let response = await fetch(
+        `http://127.0.0.1:8000/generate-products?niche=${niche}&count=${count}`
+    );
+
+    let data = await response.json();
+
+    document.getElementById("result").innerHTML =
+        `✅ ${data.products_created} produits créés !`;
+}
+
+</script>
+
+</body>
+</html>
