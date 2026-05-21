@@ -90,12 +90,21 @@ Donne :
             }
         )
 
-        results.append(shopify_response.json())
+       try:
+    results.append(shopify_response.json())
+except Exception:
+    results.append({
+        "status_code": shopify_response.status_code,
+        "text": shopify_response.text
+    })
 
     return {
         "success": True,
         "products_created": count,
         "results": results
-    }@app.get("/health")
+    }
+
+
+@app.get("/health")
 def health():
     return {"status": "healthy"}
