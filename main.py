@@ -28,14 +28,23 @@ def health():
 
 def clean_json(text):
     text = re.sub(r"```json|```", "", text).strip()
+
+    start = text.find("{")
+    end = text.rfind("}") + 1
+
+    if start != -1 and end != -1:
+        text = text[start:end]
+
     return json.loads(text)
 
 
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
+
     results = []
 
     for i in range(count):
+
         prompt = f"""
 Tu es un expert e-commerce Shopify.
 
@@ -62,19 +71,35 @@ Format exact :
             },
             json={
                 "model": "mistral-small-latest",
-                "messages": [{"role": "user", "content": prompt}]
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
             }
         )
 
         if mistral_response.status_code != 200:
-            results.append({"error": "Erreur Mistral", "details": mistral_response.text})
+            results.append({
+                "error": "Erreur Mistral",
+                "details": mistral_response.text
+            })
             continue
 
-        content = mistral_response.json()["choices"][0]["message"]["content"]
+        response_json = mistral_response.json()
+
+        print("MISTRAL RESPONSE:", response_json)
+
+        content = response_json["choices"][0]["message"]["content"]
 
         try:
             ai_product = clean_json(content)
-        except Exception:
+
+        except Exception as e:
+
+            print("JSON ERROR:", str(e))
+
             ai_product = {
                 "title": f"Produit Premium {i + 1} - {niche}",
                 "description": content,
@@ -97,13 +122,19 @@ Format exact :
                     "vendor": "AI Shopify Agent",
                     "product_type": ai_product.get("product_type", niche),
                     "status": "active",
-                    "tags": ai_product.get("tags", [niche, "AI Product", "Premium"]),
+                    "tags": ai_product.get(
+                        "tags",
+                        [niche, "AI Product", "Premium"]
+                    ),
                     "variants": [
                         {
                             "price": ai_product.get("price", "49.99"),
                             "inventory_quantity": 100,
                             "inventory_management": "shopify",
-                            "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
+                            "sku": ai_product.get(
+                                "sku",
+                                f"AI-{niche.upper()}-{i + 1}"
+                            )
                         }
                     ],
                     "images": [
@@ -117,8 +148,12 @@ Format exact :
 
         try:
             results.append(shopify_response.json())
+
         except Exception:
-            results.append({"status_code": shopify_response.status_code, "text": shopify_response.text})
+            results.append({
+                "status_code": shopify_response.status_code,
+                "text": shopify_response.text
+            })
 
     return {
         "success": True,
