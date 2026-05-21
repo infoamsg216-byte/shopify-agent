@@ -19,6 +19,11 @@ def dashboard():
         return file.read()
 
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
     results = []
@@ -53,6 +58,7 @@ Donne :
         if mistral_response.status_code != 200:
             results.append({
                 "error": "Erreur Mistral",
+                "status_code": mistral_response.status_code,
                 "details": mistral_response.text
             })
             continue
@@ -67,7 +73,7 @@ Donne :
             },
             json={
                 "product": {
-                    "title": f"Produit IA {i+1} - {niche}",
+                    "title": f"Produit IA {i + 1} - {niche}",
                     "body_html": content,
                     "vendor": "AI Shopify Agent",
                     "product_type": niche,
@@ -78,7 +84,7 @@ Donne :
                             "price": "49.99",
                             "inventory_quantity": 100,
                             "inventory_management": "shopify",
-                            "sku": f"AI-{niche.upper()}-{i+1}"
+                            "sku": f"AI-{niche.upper()}-{i + 1}"
                         }
                     ],
                     "images": [
@@ -90,21 +96,16 @@ Donne :
             }
         )
 
-       try:
-    results.append(shopify_response.json())
-except Exception:
-    results.append({
-        "status_code": shopify_response.status_code,
-        "text": shopify_response.text
-    })
+        try:
+            results.append(shopify_response.json())
+        except Exception:
+            results.append({
+                "status_code": shopify_response.status_code,
+                "text": shopify_response.text
+            })
 
     return {
         "success": True,
         "products_created": count,
         "results": results
     }
-
-
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
