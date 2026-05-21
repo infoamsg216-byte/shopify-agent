@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
 import requests
 import os
+import json
+import re
 
 load_dotenv()
 
@@ -24,18 +26,32 @@ def health():
     return {"status": "healthy"}
 
 
+def clean_json(text):
+    text = re.sub(r"```json|```", "", text).strip()
+    return json.loads(text)
+
+
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
     results = []
 
     for i in range(count):
         prompt = f"""
-Crée une fiche produit Shopify premium pour la niche : {niche}
+Tu es un expert e-commerce Shopify.
 
-Donne :
-- un nom produit unique
-- une description marketing courte
-- 3 bénéfices
+Crée 1 produit premium réaliste pour la niche : {niche}
+
+Réponds uniquement en JSON valide, sans texte autour.
+
+Format exact :
+{{
+  "title": "Nom du produit",
+  "description": "Description marketing courte en HTML",
+  "price": "49.99",
+  "product_type": "{niche}",
+  "tags": ["tag1", "tag2", "tag3", "tag4"],
+  "sku": "SKU-UNIQUE"
+}}
 """
 
         mistral_response = requests.post(
@@ -46,24 +62,27 @@ Donne :
             },
             json={
                 "model": "mistral-small-latest",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
+                "messages": [{"role": "user", "content": prompt}]
             }
         )
 
         if mistral_response.status_code != 200:
-            results.append({
-                "error": "Erreur Mistral",
-                "status_code": mistral_response.status_code,
-                "details": mistral_response.text
-            })
+            results.append({"error": "Erreur Mistral", "details": mistral_response.text})
             continue
 
         content = mistral_response.json()["choices"][0]["message"]["content"]
+
+        try:
+            ai_product = clean_json(content)
+        except Exception:
+            ai_product = {
+                "title": f"Produit Premium {i + 1} - {niche}",
+                "description": content,
+                "price": "49.99",
+                "product_type": niche,
+                "tags": [niche, "AI Product", "Premium"],
+                "sku": f"AI-{niche.upper()}-{i + 1}"
+            }
 
         shopify_response = requests.post(
             f"https://{SHOPIFY_STORE}/admin/api/2025-01/products.json",
@@ -73,18 +92,18 @@ Donne :
             },
             json={
                 "product": {
-                    "title": f"Produit IA {i + 1} - {niche}",
-                    "body_html": content,
+                    "title": ai_product["title"],
+                    "body_html": ai_product["description"],
                     "vendor": "AI Shopify Agent",
-                    "product_type": niche,
+                    "product_type": ai_product.get("product_type", niche),
                     "status": "active",
-                    "tags": [niche, "AI Product", "Trending", "Premium"],
+                    "tags": ai_product.get("tags", [niche, "AI Product", "Premium"]),
                     "variants": [
                         {
-                            "price": "49.99",
+                            "price": ai_product.get("price", "49.99"),
                             "inventory_quantity": 100,
                             "inventory_management": "shopify",
-                            "sku": f"AI-{niche.upper()}-{i + 1}"
+                            "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
                         }
                     ],
                     "images": [
@@ -99,10 +118,7 @@ Donne :
         try:
             results.append(shopify_response.json())
         except Exception:
-            results.append({
-                "status_code": shopify_response.status_code,
-                "text": shopify_response.text
-            })
+            results.append({"status_code": shopify_response.status_code, "text": shopify_response.text})
 
     return {
         "success": True,
