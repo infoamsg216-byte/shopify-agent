@@ -96,4 +96,6 @@ Donne :
         "success": True,
         "products_created": count,
         "results": results
-    }
+    }@app.get("/health")
+def health():
+    return {"status": "healthy"}
