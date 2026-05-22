@@ -46,10 +46,10 @@ def clean_json(text):
     return json.loads(text)
 
 
-def get_fallback_image(niche):
-    return FALLBACK_IMAGES.get(
-        niche.lower(),
-        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200"
+def get_fallback_image(niche, title="product"):
+    keyword = f"{niche} {title}".replace(" ", ",")
+    random_id = uuid.uuid4().hex
+    return f"https://source.unsplash.com/1200x800/?{keyword}&sig={random_id}"
     )
 
 
@@ -149,7 +149,7 @@ Format exact :
                 "Content-Type": "application/json"
             },
             json={
-                "model": "mistral-small-latest",
+                "model": "open-mistral-7b",
                 "messages": [{"role": "user", "content": prompt}]
             },
             timeout=120
@@ -190,7 +190,10 @@ Format exact :
         if generated_image:
             cloudinary_image_url = upload_to_cloudinary(generated_image)
 
-        final_image_url = cloudinary_image_url or get_fallback_image(niche)
+        final_image_url = cloudinary_image_url or get_fallback_image(
+    niche,
+    ai_product.get("title", "product")
+)
 
         image_attachment = None
         try:
