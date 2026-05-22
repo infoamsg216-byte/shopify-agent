@@ -37,7 +37,37 @@ def clean_json(text):
         text = text[start:end]
 
     return json.loads(text)
+def generate_ai_image(prompt):
 
+    response = requests.post(
+        "https://api.openai.com/v1/images/generations",
+        headers={
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "gpt-image-1",
+            "prompt": prompt,
+            "size": "1024x1024"
+        }
+    )
+
+    if response.status_code != 200:
+        print("OPENAI IMAGE ERROR:", response.text)
+        return None
+
+    result = response.json()
+
+    image_base64 = result["data"][0]["b64_json"]
+
+    image_bytes = base64.b64decode(image_base64)
+
+    file_name = "generated_image.png"
+
+    with open(file_name, "wb") as f:
+        f.write(image_bytes)
+
+    return file_name
 
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
@@ -93,7 +123,9 @@ Format exact :
         print("MISTRAL RESPONSE:", response_json)
 
         content = response_json["choices"][0]["message"]["content"]
+image_prompt = f"Professional ecommerce product photo for {niche}, studio lighting, white background, premium product"
 
+generated_image = generate_ai_image(image_prompt)
         try:
             ai_product = clean_json(content)
 
@@ -138,11 +170,7 @@ Format exact :
                             )
                         }
                     ],
-                    "images": [
-    {
-        "src": f"https://source.unsplash.com/featured/800x800/?{niche}"
-                        }
-                    ]
+                    "images": []
                 }
             }
         )
