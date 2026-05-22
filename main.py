@@ -205,7 +205,13 @@ Format exact :
                         "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
                     }
                 ],
-                "images": [{"src": final_image_url}]
+               "images": [
+    {
+        "attachment": base64.b64encode(
+            requests.get(final_image_url).content
+        ).decode()
+    }
+]
             }
         }
 
