@@ -55,6 +55,7 @@ def get_fallback_image(niche):
 
 def generate_ai_image(prompt):
     if not OPENAI_API_KEY:
+        print("OPENAI ERROR: missing API key")
         return None
 
     response = requests.post(
@@ -64,9 +65,11 @@ def generate_ai_image(prompt):
             "Content-Type": "application/json"
         },
         json={
-            "model": "gpt-image-1",
+            "model": "dall-e-3",
             "prompt": prompt,
-            "size": "1024x1024"
+            "size": "1024x1024",
+            "quality": "standard",
+            "n": 1
         },
         timeout=120
     )
@@ -75,13 +78,22 @@ def generate_ai_image(prompt):
         print("OPENAI IMAGE ERROR:", response.text)
         return None
 
-    image_base64 = response.json()["data"][0].get("b64_json")
-    if not image_base64:
+    image_url = response.json()["data"][0].get("url")
+
+    if not image_url:
+        print("OPENAI IMAGE ERROR: no image URL")
+        return None
+
+    image_response = requests.get(image_url, timeout=120)
+
+    if image_response.status_code != 200:
+        print("OPENAI IMAGE DOWNLOAD ERROR")
         return None
 
     file_name = f"generated_{uuid.uuid4().hex}.png"
+
     with open(file_name, "wb") as f:
-        f.write(base64.b64decode(image_base64))
+        f.write(image_response.content)
 
     return file_name
 
@@ -165,10 +177,12 @@ Format exact :
             }
 
         image_prompt = (
-            f"Professional ecommerce product photo of {ai_product.get('title')} "
-            f"for the {niche} niche, studio lighting, white background, "
-            f"premium realistic product photography, no text, no logo"
-        )
+    f"Premium ecommerce product photography for {ai_product.get('title')} "
+    f"in the {niche} niche. "
+    f"Ultra realistic studio lighting, white luxury background, "
+    f"professional commercial product render, highly detailed, "
+    f"unique composition, modern ecommerce style, no text, no watermark."
+)
 
         generated_image = generate_ai_image(image_prompt)
 
