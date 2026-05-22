@@ -15,7 +15,9 @@ MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
@@ -72,8 +74,50 @@ def generate_ai_image(prompt):
         f.write(image_bytes)
 
     return file_name
+def upload_to_cloudinary(file_path):
 
+    url = f"https://api.cloudinary.com/v1_1/{CLOUDINARY_CLOUD_NAME}/image/upload"
 
+    with open(file_path, "rb") as file:
+
+        response = requests.post(
+            url,
+            auth=(CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET),
+            files={
+                "file": file
+            }
+        )
+
+    if response.status_code != 200:
+        print("CLOUDINARY ERROR:", response.text)
+        return None
+
+    data = response.json()
+
+    return data["secure_url"]
+def upload_to_cloudinary(file_path):
+
+    url = f"https://api.cloudinary.com/v1_1/{CLOUDINARY_CLOUD_NAME}/image/upload"
+
+    with open(file_path, "rb") as file:
+
+        response = requests.post(
+            url,
+            auth=(CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET),
+            files={
+                "file": file
+            }
+        )
+
+    if response.status_code != 200:
+
+        print("CLOUDINARY ERROR:", response.text)
+
+        return None
+
+    data = response.json()
+
+    return data["secure_url"]
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
 
@@ -133,7 +177,10 @@ Format exact :
 
         image_prompt = f"Professional ecommerce product photo for {niche}, studio lighting, white background, premium product"
 
-        generated_image = generate_ai_image(image_prompt)
+        cloudinary_image_url = None
+
+if generated_image:
+    cloudinary_image_url = upload_to_cloudinary(generated_image)
 
         try:
 
@@ -182,11 +229,10 @@ Format exact :
                     ],
                     "images": [
     {
-        "attachment": base64.b64encode(
-            open(generated_image, "rb").read()
-        ).decode()
+        "src": cloudinary_image_url
     }
-] if generated_image else []
+] if cloudinary_image_url else []
+
                 }
             }
         )
