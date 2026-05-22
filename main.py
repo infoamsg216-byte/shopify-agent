@@ -211,7 +211,7 @@ Format exact :
             requests.get(final_image_url).content
         ).decode()
     }
-]
+],
             }
         }
 
