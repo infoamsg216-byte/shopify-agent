@@ -13,7 +13,7 @@ app = FastAPI()
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
-
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
@@ -138,10 +138,10 @@ Format exact :
                         }
                     ],
                     "images": [
-                        {
-                            "src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
-                        }
-                    ]
+    {
+        "src": f"https://source.unsplash.com/featured/800x800/?{niche}"
+    }
+]
                 }
             }
         )
