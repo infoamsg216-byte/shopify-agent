@@ -81,7 +81,6 @@ def generate_ai_image(prompt):
     image_base64 = result["data"][0].get("b64_json")
 
     if not image_base64:
-        print("OPENAI IMAGE ERROR: no b64_json returned")
         return None
 
     image_bytes = base64.b64decode(image_base64)
@@ -112,8 +111,6 @@ def upload_to_cloudinary(file_path):
         return None
 
     data = response.json()
-    print("CLOUDINARY SUCCESS:", data.get("secure_url"))
-
     return data.get("secure_url")
 
 
@@ -176,7 +173,7 @@ Format exact :
             }
 
         image_prompt = (
-            f"Professional ecommerce product photo of {ai_product['title']} "
+            f"Professional ecommerce product photo of {ai_product.get('title')} "
             f"for the {niche} niche, studio lighting, white background, "
             f"premium realistic product photography, no text, no logo"
         )
@@ -189,10 +186,18 @@ Format exact :
 
         final_image_url = cloudinary_image_url or get_fallback_image(niche)
 
+        image_attachment = None
+        try:
+            image_response = requests.get(final_image_url, timeout=60)
+            if image_response.status_code == 200:
+                image_attachment = base64.b64encode(image_response.content).decode()
+        except Exception as e:
+            print("IMAGE DOWNLOAD ERROR:", str(e))
+
         product_payload = {
             "product": {
-                "title": ai_product["title"],
-                "body_html": ai_product["description"],
+                "title": ai_product.get("title", f"Produit IA {i + 1}"),
+                "body_html": ai_product.get("description", ""),
                 "vendor": "AI Shopify Agent",
                 "product_type": ai_product.get("product_type", niche),
                 "status": "active",
@@ -205,13 +210,11 @@ Format exact :
                         "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
                     }
                 ],
-               "images": [
-    {
-        "attachment": base64.b64encode(
-            requests.get(final_image_url).content
-        ).decode()
-    }
-],
+                "images": [
+                    {
+                        "attachment": image_attachment
+                    }
+                ] if image_attachment else []
             }
         }
 
@@ -235,6 +238,7 @@ Format exact :
             "image_file_created": generated_image,
             "cloudinary_image_url": cloudinary_image_url,
             "final_image_url": final_image_url,
+            "image_attached": image_attachment is not None,
             "shopify_response": shopify_json
         })
 
