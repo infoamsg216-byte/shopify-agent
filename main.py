@@ -16,8 +16,14 @@ MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+
+FALLBACK_IMAGES = {
+    "fitness": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200",
+    "skincare": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200",
+    "kitchen": "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1200",
+    "car": "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200",
+}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -33,7 +39,6 @@ def health():
 
 def clean_json(text):
     text = re.sub(r"```json|```", "", text).strip()
-
     start = text.find("{")
     end = text.rfind("}") + 1
 
@@ -43,7 +48,17 @@ def clean_json(text):
     return json.loads(text)
 
 
+def get_fallback_image(niche):
+    return FALLBACK_IMAGES.get(
+        niche.lower(),
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200"
+    )
+
+
 def generate_ai_image(prompt):
+    if not OPENAI_API_KEY:
+        return None
+
     response = requests.post(
         "https://api.openai.com/v1/images/generations",
         headers={
@@ -54,7 +69,8 @@ def generate_ai_image(prompt):
             "model": "gpt-image-1",
             "prompt": prompt,
             "size": "1024x1024"
-        }
+        },
+        timeout=120
     )
 
     if response.status_code != 200:
@@ -62,9 +78,13 @@ def generate_ai_image(prompt):
         return None
 
     result = response.json()
-    image_base64 = result["data"][0]["b64_json"]
-    image_bytes = base64.b64decode(image_base64)
+    image_base64 = result["data"][0].get("b64_json")
 
+    if not image_base64:
+        print("OPENAI IMAGE ERROR: no b64_json returned")
+        return None
+
+    image_bytes = base64.b64decode(image_base64)
     file_name = f"generated_{uuid.uuid4().hex}.png"
 
     with open(file_name, "wb") as f:
@@ -74,13 +94,17 @@ def generate_ai_image(prompt):
 
 
 def upload_to_cloudinary(file_path):
+    if not CLOUDINARY_CLOUD_NAME:
+        return None
+
     url = f"https://api.cloudinary.com/v1_1/{CLOUDINARY_CLOUD_NAME}/image/upload"
 
     with open(file_path, "rb") as file:
         response = requests.post(
             url,
             files={"file": file},
-            data={"upload_preset": "shopify_ai"}
+            data={"upload_preset": "shopify_ai"},
+            timeout=120
         )
 
     if response.status_code != 200:
@@ -125,7 +149,8 @@ Format exact :
             json={
                 "model": "mistral-small-latest",
                 "messages": [{"role": "user", "content": prompt}]
-            }
+            },
+            timeout=120
         )
 
         if mistral_response.status_code != 200:
@@ -162,6 +187,8 @@ Format exact :
         if generated_image:
             cloudinary_image_url = upload_to_cloudinary(generated_image)
 
+        final_image_url = cloudinary_image_url or get_fallback_image(niche)
+
         product_payload = {
             "product": {
                 "title": ai_product["title"],
@@ -178,7 +205,7 @@ Format exact :
                         "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
                     }
                 ],
-                "images": [{"src": cloudinary_image_url}] if cloudinary_image_url else []
+                "images": [{"src": final_image_url}]
             }
         }
 
@@ -188,18 +215,22 @@ Format exact :
                 "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
                 "Content-Type": "application/json"
             },
-            json=product_payload
+            json=product_payload,
+            timeout=120
         )
 
         try:
-       shopify_json = shopify_response.json()
+            shopify_json = shopify_response.json()
+        except Exception:
+            shopify_json = {"text": shopify_response.text}
 
-results.append({
-    "shopify_status": shopify_response.status_code,
-    "image_file_created": generated_image,
-    "cloudinary_image_url": cloudinary_image_url,
-    "shopify_response": shopify_json
-})
+        results.append({
+            "shopify_status": shopify_response.status_code,
+            "image_file_created": generated_image,
+            "cloudinary_image_url": cloudinary_image_url,
+            "final_image_url": final_image_url,
+            "shopify_response": shopify_json
+        })
 
     return {
         "success": True,
