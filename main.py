@@ -192,12 +192,14 @@ Format exact :
         )
 
         try:
-            results.append(shopify_response.json())
-        except Exception:
-            results.append({
-                "status_code": shopify_response.status_code,
-                "text": shopify_response.text
-            })
+       shopify_json = shopify_response.json()
+
+results.append({
+    "shopify_status": shopify_response.status_code,
+    "image_file_created": generated_image,
+    "cloudinary_image_url": cloudinary_image_url,
+    "shopify_response": shopify_json
+})
 
     return {
         "success": True,
