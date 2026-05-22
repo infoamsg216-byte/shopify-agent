@@ -16,6 +16,7 @@ SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
     with open("index.html", "r", encoding="utf-8") as file:
@@ -28,6 +29,7 @@ def health():
 
 
 def clean_json(text):
+
     text = re.sub(r"```json|```", "", text).strip()
 
     start = text.find("{")
@@ -37,6 +39,8 @@ def clean_json(text):
         text = text[start:end]
 
     return json.loads(text)
+
+
 def generate_ai_image(prompt):
 
     response = requests.post(
@@ -68,6 +72,7 @@ def generate_ai_image(prompt):
         f.write(image_bytes)
 
     return file_name
+
 
 @app.get("/generate-products")
 def generate_products(niche: str, count: int = 3):
@@ -112,10 +117,12 @@ Format exact :
         )
 
         if mistral_response.status_code != 200:
+
             results.append({
                 "error": "Erreur Mistral",
                 "details": mistral_response.text
             })
+
             continue
 
         response_json = mistral_response.json()
@@ -123,10 +130,13 @@ Format exact :
         print("MISTRAL RESPONSE:", response_json)
 
         content = response_json["choices"][0]["message"]["content"]
-image_prompt = f"Professional ecommerce product photo for {niche}, studio lighting, white background, premium product"
 
-generated_image = generate_ai_image(image_prompt)
+        image_prompt = f"Professional ecommerce product photo for {niche}, studio lighting, white background, premium product"
+
+        generated_image = generate_ai_image(image_prompt)
+
         try:
+
             ai_product = clean_json(content)
 
         except Exception as e:
@@ -176,9 +186,11 @@ generated_image = generate_ai_image(image_prompt)
         )
 
         try:
+
             results.append(shopify_response.json())
 
         except Exception:
+
             results.append({
                 "status_code": shopify_response.status_code,
                 "text": shopify_response.text
