@@ -86,17 +86,23 @@ def upload_to_cloudinary(file_path):
 
         response = requests.post(
             url,
-            auth=(CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET),
             files={
                 "file": file
+            },
+            data={
+                "upload_preset": "shopify_ai"
             }
         )
 
     if response.status_code != 200:
+
         print("CLOUDINARY ERROR:", response.text)
+
         return None
 
     data = response.json()
+
+    print("CLOUDINARY SUCCESS:", data["secure_url"])
 
     return data["secure_url"]
 
