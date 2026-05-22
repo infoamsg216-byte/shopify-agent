@@ -5,6 +5,7 @@ import requests
 import os
 import json
 import re
+import base64
 
 load_dotenv()
 
@@ -140,8 +141,8 @@ Format exact :
                     "images": [
     {
         "src": f"https://source.unsplash.com/featured/800x800/?{niche}"
-    }
-]
+                        }
+                    ]
                 }
             }
         )
