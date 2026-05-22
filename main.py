@@ -41,10 +41,8 @@ def clean_json(text):
     text = re.sub(r"```json|```", "", text).strip()
     start = text.find("{")
     end = text.rfind("}") + 1
-
     if start != -1 and end != -1:
         text = text[start:end]
-
     return json.loads(text)
 
 
@@ -77,17 +75,13 @@ def generate_ai_image(prompt):
         print("OPENAI IMAGE ERROR:", response.text)
         return None
 
-    result = response.json()
-    image_base64 = result["data"][0].get("b64_json")
-
+    image_base64 = response.json()["data"][0].get("b64_json")
     if not image_base64:
         return None
 
-    image_bytes = base64.b64decode(image_base64)
     file_name = f"generated_{uuid.uuid4().hex}.png"
-
     with open(file_name, "wb") as f:
-        f.write(image_bytes)
+        f.write(base64.b64decode(image_base64))
 
     return file_name
 
@@ -110,8 +104,7 @@ def upload_to_cloudinary(file_path):
         print("CLOUDINARY ERROR:", response.text)
         return None
 
-    data = response.json()
-    return data.get("secure_url")
+    return response.json().get("secure_url")
 
 
 @app.get("/generate-products")
@@ -161,8 +154,7 @@ Format exact :
 
         try:
             ai_product = clean_json(content)
-        except Exception as e:
-            print("JSON ERROR:", str(e))
+        except Exception:
             ai_product = {
                 "title": f"Produit Premium {i + 1} - {niche}",
                 "description": content,
@@ -210,11 +202,7 @@ Format exact :
                         "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
                     }
                 ],
-                "images": [
-                    {
-                        "attachment": image_attachment
-                    }
-                ] if image_attachment else []
+                "images": []
             }
         }
 
@@ -233,13 +221,40 @@ Format exact :
         except Exception:
             shopify_json = {"text": shopify_response.text}
 
+        product_id = shopify_json.get("product", {}).get("id")
+        image_upload_response = None
+
+        if product_id and image_attachment:
+            image_upload_response = requests.post(
+                f"https://{SHOPIFY_STORE}/admin/api/2025-01/products/{product_id}/images.json",
+                headers={
+                    "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "image": {
+                        "attachment": image_attachment,
+                        "filename": f"{niche}-product.png"
+                    }
+                },
+                timeout=120
+            )
+
+            print(
+                "SHOPIFY IMAGE UPLOAD:",
+                image_upload_response.status_code,
+                image_upload_response.text
+            )
+
         results.append({
             "shopify_status": shopify_response.status_code,
             "image_file_created": generated_image,
             "cloudinary_image_url": cloudinary_image_url,
             "final_image_url": final_image_url,
             "image_attached": image_attachment is not None,
-            "shopify_response": shopify_json
+            "shopify_response": shopify_json,
+            "image_upload_status": image_upload_response.status_code if image_upload_response else None,
+            "image_upload_response": image_upload_response.text if image_upload_response else None
         })
 
     return {
