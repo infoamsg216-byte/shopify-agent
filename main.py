@@ -180,7 +180,11 @@ Format exact :
                             )
                         }
                     ],
-                    "images": []
+                    "images": [
+    {
+        "attachment": base64.b64encode(open(generated_image, "rb").read()).decode()
+    }
+]
                 }
             }
         )
