@@ -50,52 +50,10 @@ def get_fallback_image(niche, title="product"):
     keyword = f"{niche} {title}".replace(" ", ",")
     random_id = uuid.uuid4().hex
     return f"https://source.unsplash.com/1200x800/?{keyword}&sig={random_id}"
-    )
 
 
 def generate_ai_image(prompt):
-    if not OPENAI_API_KEY:
-        print("OPENAI ERROR: missing API key")
-        return None
-
-    response = requests.post(
-        "https://api.openai.com/v1/images/generations",
-        headers={
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "dall-e-3",
-            "prompt": prompt,
-            "size": "1024x1024",
-            "quality": "standard",
-            "n": 1
-        },
-        timeout=120
-    )
-
-    if response.status_code != 200:
-        print("OPENAI IMAGE ERROR:", response.text)
-        return None
-
-    image_url = response.json()["data"][0].get("url")
-
-    if not image_url:
-        print("OPENAI IMAGE ERROR: no image URL")
-        return None
-
-    image_response = requests.get(image_url, timeout=120)
-
-    if image_response.status_code != 200:
-        print("OPENAI IMAGE DOWNLOAD ERROR")
-        return None
-
-    file_name = f"generated_{uuid.uuid4().hex}.png"
-
-    with open(file_name, "wb") as f:
-        f.write(image_response.content)
-
-    return file_name
+    return None
 
 
 def upload_to_cloudinary(file_path):
