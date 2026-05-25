@@ -1,0 +1,128 @@
+[
+  {
+    "index": 1,
+    "batch_id": "dd1b352df76b",
+    "success": true,
+    "title": "UrbanFlow Recovery Band Max",
+    "brand": "UrbanFlow",
+    "product_id": 15108636803117,
+    "price": "69.99",
+    "compare_at_price": "115.99",
+    "sku": "URBANFLOW-FITNESS-1-05FFFD",
+    "barcode": "8360227310039",
+    "handle": "urbanflow-recovery-band-max",
+    "product_type": "fitness",
+    "seo_title": "UrbanFlow Recovery Band Max | Fitness Premium",
+    "seo_description": "Découvrez UrbanFlow Recovery Band Max, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/11585118/pexels-photo-11585118.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "2d83ee8daac4",
+    "success": true,
+    "title": "Lumière Architecturale - Suspension Design Minimaliste en Acier & Verre Trempé",
+    "brand": "LUMINA",
+    "product_id": 15108637032493,
+    "price": "299.99",
+    "compare_at_price": "494.99",
+    "sku": "LUMINA-SUSPENSION-BLACK-ACIER-2024",
+    "barcode": "37000012345678",
+    "handle": "suspension-lumina-design-minimaliste",
+    "product_type": "home_lighting_suspension",
+    "seo_title": "Suspension Lumière Design Minimaliste Acier Verre - LUMINA",
+    "seo_description": "Suspension design premium en acier et verre trempé, LED 2700K, 800 lumens. Idéale pour salle à manger ou entrée élégante. Livraison rapide.",
+    "collection_name": "Éclairage Contemporain",
+    "collection_id": 506047660077,
+    "collection_attached": true,
+    "shopify_category": "Home > Éclairage > Suspensions",
+    "image_source": "pexels:modern minimalist ceiling pendant light black steel and tempered glass close up professional product photography studio ",
+    "final_image_url": "https://images.pexels.com/photos/29150799/pexels-photo-29150799.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  }
+]

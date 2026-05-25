@@ -1,149 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Shopify Agent</title>
-
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f0f0f, #1b1b1b);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
-    }
-
-    .box {
-      background: #1f1f1f;
-      padding: 40px;
-      border-radius: 24px;
-      width: 420px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    }
-
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #aaa;
-      margin-bottom: 30px;
-    }
-
-    label {
-      font-weight: bold;
-    }
-
-    input {
-      width: 100%;
-      padding: 15px;
-      margin-top: 8px;
-      margin-bottom: 20px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      width: 100%;
-      padding: 16px;
-      background: #00c853;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background: #00e676;
-    }
-
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-
-    #result {
-      margin-top: 25px;
-      padding: 15px;
-      border-radius: 12px;
-      background: #111;
-      display: none;
-      line-height: 1.5;
-    }
-
-    .success {
-      color: #00e676;
-    }
-
-    .error {
-      color: #ff5252;
-    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b0f14;color:#fff}
+    .wrap{max-width:1180px;margin:auto;padding:32px}
+    .hero{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:24px}
+    .card{background:#151b23;border:1px solid #263241;border-radius:22px;padding:24px;box-shadow:0 18px 60px #0005}
+    h1{margin:0 0 10px;font-size:38px} p{color:#aab6c5}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    label{font-weight:700;margin:10px 0 8px;display:block}
+    input,select{width:100%;padding:16px;border-radius:14px;border:1px solid #344255;background:#0f141b;color:white;font-size:16px}
+    .buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+    button{border:0;border-radius:14px;padding:16px 20px;font-weight:800;font-size:16px;cursor:pointer}
+    .primary{background:#05c46b;color:white}.secondary{background:#243246;color:white}.danger{background:#ef4444;color:white}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+    .stat{background:#0f141b;border:1px solid #263241;border-radius:16px;padding:16px}
+    .stat b{font-size:26px;display:block}
+    .status{margin-top:16px;background:#0f141b;border-radius:16px;padding:16px;white-space:pre-wrap}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:20px}
+    .product{background:#151b23;border:1px solid #263241;border-radius:18px;overflow:hidden}
+    .product img{width:100%;height:190px;object-fit:cover;background:#0f141b}
+    .product .body{padding:16px}.product h3{margin:0 0 8px;font-size:17px}.meta{color:#aab6c5;font-size:13px}
+    .pill{display:inline-block;background:#073b28;color:#40ff9f;padding:6px 10px;border-radius:99px;font-size:12px;font-weight:800;margin-top:8px}
+    @media(max-width:760px){.grid,.stats{grid-template-columns:1fr}.wrap{padding:16px}h1{font-size:30px}}
   </style>
 </head>
-
 <body>
-  <div class="box">
-    <h1>AI Shopify Agent 🚀</h1>
-    <p>Génère automatiquement des produits Shopify avec l’IA.</p>
-
-    <label>Niche</label>
-    <input type="text" id="niche" placeholder="ex: skincare, fitness, gaming" />
-
-    <label>Nombre de produits</label>
-    <input type="number" id="count" value="3" min="1" max="20" />
-
-    <button id="btn" onclick="generateProducts()">Générer Produits</button>
-
-    <div id="result"></div>
+  <div class="wrap">
+    <div class="card hero">
+      <div>
+        <h1>AI Shopify Agent 🚀</h1>
+        <p>Génère des produits Shopify complets : images Pexels, SEO, collections, variantes, stock, fournisseur, prix barré, metafields et historique.</p>
+      </div>
+      <div class="grid">
+        <div>
+          <label>Niche</label>
+          <input id="niche" value="fitness" placeholder="fitness, skincare, car, home decor..." />
+        </div>
+        <div>
+          <label>Nombre de produits</label>
+          <select id="count">
+            <option value="1">1 produit</option>
+            <option value="3" selected>3 produits</option>
+            <option value="10">Generate 10 products</option>
+            <option value="50">Generate 50 products</option>
+          </select>
+        </div>
+      </div>
+      <div class="buttons">
+        <button class="primary" onclick="generate()">Générer produits</button>
+        <button class="secondary" onclick="quick(10)">Generate 10</button>
+        <button class="secondary" onclick="quick(50)">Generate 50</button>
+        <button class="secondary" onclick="loadHistory()">Historique</button>
+        <button class="danger" onclick="clearHistory()">Clear</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="created">0</b><span>Produits créés</span></div>
+        <div class="stat"><b id="images">0</b><span>Images attachées</span></div>
+        <div class="stat"><b id="collections">0</b><span>Collections</span></div>
+        <div class="stat"><b id="metas">0</b><span>Metafields</span></div>
+      </div>
+      <div id="status" class="status">Prêt.</div>
+    </div>
+    <div id="products" class="products"></div>
   </div>
 
   <script>
-    async function generateProducts() {
-      const niche = document.getElementById("niche").value.trim();
-      const count = document.getElementById("count").value;
-      const result = document.getElementById("result");
-      const btn = document.getElementById("btn");
-
-      if (!niche) {
-        result.style.display = "block";
-        result.innerHTML = "<span class='error'>❌ Entre une niche.</span>";
-        return;
-      }
-
-      btn.disabled = true;
-      btn.innerText = "Génération...";
-      result.style.display = "block";
-      result.innerHTML = "⏳ Génération en cours...";
-
-      try {
-        const response = await fetch(
-          `/generate-products?niche=${encodeURIComponent(niche)}&count=${count}`
-        );
-
-        const data = await response.json();
-
-        if (data.success) {
-          result.innerHTML = `
-            <span class="success">✅ ${data.products_created} produit(s) créé(s) avec succès !</span><br>
-            Va vérifier dans Shopify → Produits.
-          `;
-        } else {
-          result.innerHTML = "<span class='error'>❌ Erreur pendant la génération.</span>";
-        }
-      } catch (error) {
-        result.innerHTML = "<span class='error'>❌ Erreur de connexion API.</span>";
-      }
-
-      btn.disabled = false;
-      btn.innerText = "Générer Produits";
+    function setStatus(msg){ document.getElementById('status').textContent = msg; }
+    function setStats(data){
+      document.getElementById('created').textContent = data.products_created || 0;
+      document.getElementById('images').textContent = data.images_attached || 0;
+      document.getElementById('collections').textContent = data.collections_attached || 0;
+      document.getElementById('metas').textContent = data.metafields_written || 0;
+    }
+    function card(item){
+      const img = item.final_image_url ? `<img src="${item.final_image_url}" />` : `<div style="height:190px;display:grid;place-items:center;background:#0f141b;color:#667">No image</div>`;
+      return `<div class="product">${img}<div class="body">
+        <h3>${item.title || 'Sans titre'}</h3>
+        <div class="meta">${item.brand || ''} · ${item.product_type || ''}</div>
+        <div class="meta">Prix: ${item.price || '-'} · Barré: ${item.compare_at_price || '-'}</div>
+        <div class="meta">Collection: ${item.collection_name || '-'}</div>
+        <div class="meta">SEO: ${item.seo_title || '-'}</div>
+        <div class="pill">${item.success ? 'Créé Shopify' : 'Erreur'}</div>
+      </div></div>`;
+    }
+    function render(items){ document.getElementById('products').innerHTML = (items || []).map(card).join(''); }
+    async function generate(){
+      const niche = encodeURIComponent(document.getElementById('niche').value || 'fitness');
+      const count = document.getElementById('count').value;
+      setStatus(`Génération en cours (${count})...`);
+      render([]);
+      try{
+        const res = await fetch(`/generate-products?niche=${niche}&count=${count}`);
+        const data = await res.json();
+        setStats(data);
+        render(data.results || []);
+        setStatus(JSON.stringify({success:data.success,batch_id:data.batch_id,created:data.products_created,images:data.images_attached,collections:data.collections_attached,metafields:data.metafields_written}, null, 2));
+      }catch(e){ setStatus("Erreur: " + e.message); }
+    }
+    function quick(n){ document.getElementById('count').value = String(n); generate(); }
+    async function loadHistory(){
+      setStatus("Chargement historique...");
+      const res = await fetch('/history?limit=50');
+      const data = await res.json();
+      render(data.items || []);
+      setStatus(`${data.count || 0} éléments dans l'historique.`);
+    }
+    async function clearHistory(){
+      await fetch('/clear-history');
+      render([]);
+      setStatus("Historique supprimé.");
     }
   </script>
 </body>

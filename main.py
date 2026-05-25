@@ -1,62 +1,39 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
-import os
-import re
-import json
-import uuid
-import base64
-import random
-import requests
+import os, re, json, uuid, base64, random, html
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+import requests
 
 load_dotenv()
 
-app = FastAPI(title="AI Shopify Agent", version="3.0")
+APP_VERSION = "6.0"
+app = FastAPI(title="AI Shopify Agent", version=APP_VERSION)
 
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "open-mistral-7b")
-
 SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
 SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2025-01")
-
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
+
+HISTORY_FILE = "generation_history.json"
 
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
     if os.path.exists("index.html"):
-        with open("index.html", "r", encoding="utf-8") as file:
-            return file.read()
-
-    return """
-    <html>
-        <head>
-            <title>AI Shopify Agent</title>
-            <style>
-                body { font-family: Arial, sans-serif; background: #0f0f12; color: white; padding: 50px; }
-                .box { max-width: 700px; margin: auto; background: #1b1b20; padding: 35px; border-radius: 20px; }
-                a { color: #00ff88; }
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <h1>AI Shopify Agent 🚀</h1>
-                <p>Backend running successfully.</p>
-                <p><a href="/health">Health check</a></p>
-                <p>Example: <code>/generate-products?niche=skincare&count=1</code></p>
-            </div>
-        </body>
-    </html>
-    """
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    return "<h1>AI Shopify Agent</h1><p>Backend OK. Add index.html for dashboard.</p>"
 
 
 @app.get("/health")
 def health():
     return {
         "status": "healthy",
-        "version": "3.0",
+        "version": APP_VERSION,
         "mistral": "LOADED" if MISTRAL_API_KEY else "MISSING",
         "mistral_model": MISTRAL_MODEL,
         "shopify_store": "LOADED" if SHOPIFY_STORE else "MISSING",
@@ -65,11 +42,20 @@ def health():
     }
 
 
-def normalize_shopify_store(store: Optional[str]) -> Optional[str]:
-    if not store:
-        return None
-    store = store.strip().replace("https://", "").replace("http://", "").rstrip("/")
-    return store
+@app.get("/history")
+def history(limit: int = 50):
+    items = load_history()
+    return {"success": True, "count": len(items[-limit:]), "items": items[-limit:][::-1]}
+
+
+@app.get("/clear-history")
+def clear_history():
+    save_history([])
+    return {"success": True, "message": "history cleared"}
+
+
+def now_iso() -> str:
+    return datetime.utcnow().isoformat() + "Z"
 
 
 def safe_text(value: Any, fallback: str = "") -> str:
@@ -78,421 +64,583 @@ def safe_text(value: Any, fallback: str = "") -> str:
     return str(value).strip()
 
 
-def clean_json_response(text: str) -> Dict[str, Any]:
-    text = re.sub(r"```json|```", "", text).strip()
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start == -1 or end <= start:
-        raise ValueError("No valid JSON found in AI response")
-    return json.loads(text[start:end])
+def truncate(value: str, max_len: int) -> str:
+    value = safe_text(value)
+    return value if len(value) <= max_len else value[: max_len - 3].rstrip() + "..."
 
 
 def slugify(value: str) -> str:
-    value = value.lower().strip()
+    value = safe_text(value).lower().replace("&", "and")
     value = re.sub(r"[^a-z0-9À-ÿ]+", "-", value)
-    return value.strip("-") or uuid.uuid4().hex[:8]
+    value = re.sub(r"-+", "-", value).strip("-")
+    return value or uuid.uuid4().hex[:8]
 
 
-def clean_price(value: Any, niche: str = "") -> str:
-    try:
-        price = str(value).replace("€", "").replace("$", "").replace(",", ".").strip()
-        number = float(price)
-        if number < 9:
-            number = 29.99
-        if number > 299:
-            number = 199.99
-        return f"{number:.2f}"
-    except Exception:
-        niche = niche.lower()
-        if "skincare" in niche or "beauty" in niche:
-            return "39.99"
-        if "fitness" in niche or "sport" in niche:
-            return "59.99"
-        if "kitchen" in niche:
-            return "34.99"
-        if "pet" in niche:
-            return "29.99"
-        return "49.99"
-
-
-def clean_tags(tags: Any, niche: str) -> List[str]:
-    clean: List[str] = []
-    if isinstance(tags, str):
-        tags = [tags]
-    if isinstance(tags, list):
-        for tag in tags:
-            tag = str(tag).strip().lower()
-            tag = re.sub(r"[^a-zA-Z0-9À-ÿ\- ]", "", tag)
-            tag = re.sub(r"\s+", " ", tag)
-            if tag and tag not in clean:
-                clean.append(tag)
-    for tag in [niche.lower(), "premium", "best seller", "ai generated", "shopify"]:
-        if tag not in clean:
-            clean.append(tag)
-    return clean[:12]
-
-
-def clean_sku(sku: Any, niche: str, index: int) -> str:
-    if sku:
-        sku = str(sku).upper()
-        sku = re.sub(r"[^A-Z0-9\-]", "-", sku)
-        sku = re.sub(r"-+", "-", sku).strip("-")
-        if len(sku) >= 6:
-            return sku[:60]
-    niche_clean = re.sub(r"[^A-Z0-9]", "-", niche.upper())
-    return f"AI-{niche_clean}-{index}-{uuid.uuid4().hex[:6].upper()}"
-
-
-def strip_bad_title_words(title: str) -> str:
-    cleaned = title.strip().replace("**", "")
-    bad_patterns = [
-        r"^produit premium\s*\d*\s*[-–:]*\s*",
-        r"^premium product\s*\d*\s*[-–:]*\s*",
-        r"^produit ia\s*\d*\s*[-–:]*\s*",
-        r"^ai product\s*\d*\s*[-–:]*\s*",
-    ]
-    for pattern in bad_patterns:
-        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
-    return re.sub(r"\s+", " ", cleaned)
-
-
-def niche_keywords(niche: str, title: str = "") -> List[str]:
-    n = niche.lower()
-    t = title.lower()
-    if any(x in n or x in t for x in ["skincare", "beauty", "serum", "skin", "cosmetic", "soin"]):
-        return ["skincare product", "beauty serum bottle", "cosmetic product", "luxury skincare", "face cream product"]
-    if any(x in n or x in t for x in ["fitness", "gym", "sport", "musculation", "workout"]):
-        return ["fitness equipment", "gym accessories", "workout product", "sports gear", "training equipment"]
-    if any(x in n or x in t for x in ["kitchen", "cuisine", "cooking"]):
-        return ["kitchen product", "modern kitchen gadget", "cooking tools", "kitchen accessory"]
-    if any(x in n or x in t for x in ["pet", "dog", "cat", "animal"]):
-        return ["pet product", "dog accessory", "cat product", "pet care product"]
-    if any(x in n or x in t for x in ["car", "auto", "vehicle"]):
-        return ["car accessory", "automotive product", "car interior accessory"]
-    if any(x in n or x in t for x in ["home", "decor", "maison"]):
-        return ["home decor product", "modern home accessory", "interior design product"]
-    return [f"{niche} product", f"{niche} premium", f"{niche} ecommerce", "premium product"]
-
-
-BRAND_PREFIXES = ["Nova", "Luma", "Nectar", "Aero", "Velora", "Hydra", "Pulse", "Aura", "Zenith", "Vita", "Core", "Elixir", "Luxe", "Prisma"]
-PRODUCT_SUFFIXES = ["Pro", "Elite", "Max", "Glow", "Core", "Plus", "X", "Prime", "Studio", "Essentials", "Ultra", "Active"]
-
-
-def generate_local_premium_name(niche: str, index: int) -> str:
-    brand = random.choice(BRAND_PREFIXES)
-    suffix = random.choice(PRODUCT_SUFFIXES)
-    if "skincare" in niche.lower():
-        words = ["Renewal Serum", "Hydra Glow Cream", "Radiance Oil", "Repair Essence"]
-    elif "fitness" in niche.lower():
-        words = ["Training Kit", "Recovery Band", "Grip Gloves", "Performance Bottle"]
-    elif "kitchen" in niche.lower():
-        words = ["Smart Chopper", "Chef Tool", "Storage Set", "Prep Station"]
-    else:
-        n = niche.strip().title()
-        words = [f"{n} Kit", f"{n} Essential", f"{n} System"]
-    return f"{brand} {random.choice(words)} {suffix}"
-
-
-def build_fallback_product(niche: str, index: int) -> Dict[str, Any]:
-    title = generate_local_premium_name(niche, index)
-    description = f"""
-    <h2>{title}</h2>
-    <p><strong>{title}</strong> est un produit premium conçu pour la niche <strong>{niche}</strong>.</p>
-    <p>Il combine design moderne, utilité réelle et positionnement e-commerce attractif pour améliorer la valeur perçue de votre boutique Shopify.</p>
-    <ul>
-        <li>Design professionnel et moderne</li>
-        <li>Positionnement premium pour augmenter la conversion</li>
-        <li>Produit adapté aux clients exigeants</li>
-        <li>Idéal pour une boutique Shopify spécialisée</li>
-    </ul>
-    <p><strong>Offre limitée :</strong> parfait pour créer une fiche produit claire, crédible et vendable.</p>
-    """
-    return {
-        "title": title,
-        "description": description,
-        "price": clean_price(None, niche),
-        "product_type": niche,
-        "tags": clean_tags([niche, "premium", "ecommerce"], niche),
-        "sku": clean_sku(None, niche, index),
-        "image_query": niche_keywords(niche, title)[0],
-    }
-
-
-def validate_product(product: Dict[str, Any], niche: str, index: int) -> Dict[str, Any]:
-    fallback = build_fallback_product(niche, index)
-    title = strip_bad_title_words(safe_text(product.get("title"), fallback["title"]))
-    if len(title) < 8:
-        title = fallback["title"]
-    description = safe_text(product.get("description"), fallback["description"])
-    if "<p" not in description and "<h" not in description and "<ul" not in description:
-        description = f"<h2>{title}</h2><p>{description}</p>"
-    image_query = safe_text(product.get("image_query"), "") or niche_keywords(niche, title)[0]
-    return {
-        "title": title[:120],
-        "description": description,
-        "price": clean_price(product.get("price"), niche),
-        "product_type": safe_text(product.get("product_type"), niche)[:80],
-        "tags": clean_tags(product.get("tags"), niche),
-        "sku": clean_sku(product.get("sku"), niche, index),
-        "image_query": image_query[:120],
-    }
-
-
-def generate_product_with_mistral(niche: str, index: int) -> Dict[str, Any]:
-    if not MISTRAL_API_KEY:
-        print("MISTRAL_API_KEY missing, using local fallback product")
-        return build_fallback_product(niche, index)
-
-    prompt = f"""
-Tu es un expert senior en e-commerce Shopify, branding premium, copywriting et SEO.
-
-Crée UN SEUL produit réaliste et vendable pour une boutique Shopify dans la niche : "{niche}".
-
-Objectif :
-Le produit doit avoir un vrai nom commercial, une vraie promesse marketing, un prix crédible, des tags SEO et une requête image claire.
-
-Règles strictes :
-- Réponds UNIQUEMENT en JSON valide.
-- Aucun texte avant ou après le JSON.
-- Pas de Markdown.
-- Pas de bloc ```json.
-- Interdit d'utiliser "Produit Premium", "Produit IA", "Premium Product" comme nom.
-- Le nom doit ressembler à une vraie marque ou un vrai produit vendable.
-- Description en HTML propre.
-- Prix entre 29.99 et 199.99.
-- SKU unique propre.
-- image_query doit être en anglais et optimisée pour trouver une photo Pexels cohérente.
-
-Format exact obligatoire :
-{{
-  "title": "Nom commercial premium du produit",
-  "description": "<h2>Titre vendeur</h2><p>Description courte et persuasive.</p><ul><li>Bénéfice 1</li><li>Bénéfice 2</li><li>Bénéfice 3</li></ul><p>Phrase de conversion.</p>",
-  "price": "49.99",
-  "product_type": "{niche}",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "sku": "SKU-UNIQUE",
-  "image_query": "english search query for a realistic product photo"
-}}
-"""
-    try:
-        response = requests.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {MISTRAL_API_KEY}", "Content-Type": "application/json"},
-            json={"model": MISTRAL_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.65},
-            timeout=120,
-        )
-        if response.status_code != 200:
-            print("MISTRAL ERROR:", response.status_code, response.text[:500])
-            return build_fallback_product(niche, index)
-        content = response.json()["choices"][0]["message"]["content"]
-        try:
-            raw_product = clean_json_response(content)
-        except Exception as error:
-            print("MISTRAL JSON PARSE ERROR:", str(error))
-            print("RAW AI CONTENT:", content[:500])
-            raw_product = build_fallback_product(niche, index)
-        return validate_product(raw_product, niche, index)
-    except Exception as error:
-        print("MISTRAL REQUEST ERROR:", str(error))
-        return build_fallback_product(niche, index)
-
-
-def get_pexels_image_url(product: Dict[str, Any], niche: str) -> Tuple[Optional[str], str]:
-    queries = []
-    if product.get("image_query"):
-        queries.append(product["image_query"])
-    queries.extend(niche_keywords(niche, product.get("title", "")))
-
-    if not PEXELS_API_KEY:
-        return None, "pexels_missing"
-
-    for query in queries:
-        try:
-            response = requests.get(
-                "https://api.pexels.com/v1/search",
-                headers={"Authorization": PEXELS_API_KEY, "User-Agent": "AI-Shopify-Agent/3.0"},
-                params={"query": query, "per_page": 12, "orientation": "square", "size": "large"},
-                timeout=60,
-            )
-            if response.status_code != 200:
-                print("PEXELS ERROR:", response.status_code, response.text[:300])
-                continue
-            photos = response.json().get("photos", [])
-            if not photos:
-                continue
-            chosen = random.choice(photos[:8])
-            src = chosen.get("src", {})
-            image_url = src.get("large2x") or src.get("large") or src.get("medium") or src.get("original")
-            if image_url:
-                return image_url, f"pexels:{query}"
-        except Exception as error:
-            print("PEXELS REQUEST ERROR:", str(error))
-    return None, "pexels_no_result"
-
-
-def get_unsplash_fallback_url(niche: str, title: str) -> str:
-    query = niche_keywords(niche, title)[0].replace(" ", ",")
-    sig = uuid.uuid4().hex
-    return f"https://source.unsplash.com/1200x800/?{query}&sig={sig}"
-
-
-def get_best_image_url(product: Dict[str, Any], niche: str) -> Tuple[str, str]:
-    pexels_url, source = get_pexels_image_url(product, niche)
-    if pexels_url:
-        return pexels_url, source
-    return get_unsplash_fallback_url(niche, product.get("title", niche)), "unsplash_fallback"
-
-
-def download_image_as_base64(url: str) -> Optional[str]:
-    try:
-        response = requests.get(
-            url,
-            timeout=90,
-            headers={"User-Agent": "Mozilla/5.0 AI-Shopify-Agent/3.0", "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"},
-            allow_redirects=True,
-        )
-        content_type = response.headers.get("Content-Type", "")
-        if response.status_code != 200:
-            print("IMAGE DOWNLOAD FAILED:", response.status_code, url)
-            return None
-        if "image" not in content_type.lower():
-            print("IMAGE DOWNLOAD NOT IMAGE:", content_type, url)
-            return None
-        return base64.b64encode(response.content).decode("utf-8")
-    except Exception as error:
-        print("IMAGE DOWNLOAD ERROR:", str(error))
+def normalize_shopify_store(store: Optional[str]) -> Optional[str]:
+    if not store:
         return None
+    return store.strip().replace("https://", "").replace("http://", "").rstrip("/")
 
 
 def shopify_headers() -> Dict[str, str]:
     return {"X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN or "", "Content-Type": "application/json"}
 
 
-def create_shopify_product(product: Dict[str, Any]) -> Dict[str, Any]:
+def clean_json_response(text: str) -> Dict[str, Any]:
+    text = re.sub(r"```json|```", "", safe_text(text)).strip()
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start == -1 or end <= start:
+        raise ValueError("No valid JSON object found")
+    return json.loads(text[start:end])
+
+
+def load_history() -> List[Dict[str, Any]]:
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def save_history(items: List[Dict[str, Any]]) -> None:
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(items[-500:], f, ensure_ascii=False, indent=2)
+
+
+def append_history(item: Dict[str, Any]) -> None:
+    items = load_history()
+    items.append(item)
+    save_history(items)
+
+
+def clean_price(value: Any, niche: str = "") -> str:
+    try:
+        number = float(str(value).replace("€", "").replace("$", "").replace(",", ".").strip())
+    except Exception:
+        n = niche.lower()
+        if any(x in n for x in ["skincare", "beauty", "soin"]):
+            number = random.choice([34.99, 39.99, 44.99, 49.99])
+        elif any(x in n for x in ["fitness", "gym", "sport"]):
+            number = random.choice([49.99, 59.99, 69.99, 79.99])
+        elif any(x in n for x in ["car", "auto"]):
+            number = random.choice([39.99, 49.99, 59.99, 69.99])
+        elif any(x in n for x in ["home", "decor", "maison"]):
+            number = random.choice([39.99, 49.99, 69.99, 89.99])
+        else:
+            number = random.choice([39.99, 49.99, 59.99, 79.99])
+    number = max(9.99, min(number, 299.99))
+    return f"{number:.2f}"
+
+
+def smart_compare_at_price(price: str) -> str:
+    try:
+        p = float(price)
+        compare = int(p * random.choice([1.35, 1.45, 1.55, 1.65])) + 0.99
+        return f"{max(compare, p + 15):.2f}"
+    except Exception:
+        return "79.99"
+
+
+def generate_barcode() -> str:
+    return "8" + "".join(str(random.randint(0, 9)) for _ in range(12))
+
+
+def detect_category(niche: str, title: str = "") -> str:
+    text = f"{niche} {title}".lower()
+    if any(x in text for x in ["skincare", "beauty", "serum", "skin", "soin"]):
+        return "Health & Beauty > Personal Care > Cosmetics > Skin Care"
+    if any(x in text for x in ["fitness", "gym", "sport", "workout", "musculation"]):
+        return "Sporting Goods > Exercise & Fitness"
+    if any(x in text for x in ["kitchen", "cuisine", "cooking"]):
+        return "Home & Garden > Kitchen & Dining > Kitchen Tools"
+    if any(x in text for x in ["pet", "dog", "cat"]):
+        return "Animals & Pet Supplies > Pet Supplies"
+    if any(x in text for x in ["car", "auto", "vehicle"]):
+        return "Vehicles & Parts > Vehicle Parts & Accessories"
+    if any(x in text for x in ["home", "decor", "maison", "wall", "lamp"]):
+        return "Home & Garden > Decor"
+    return "General Merchandise"
+
+
+def product_type_for(niche: str, title: str = "") -> str:
+    text = f"{niche} {title}".lower()
+    if "serum" in text:
+        return "skincare-serum"
+    if any(x in text for x in ["skincare", "beauty", "soin"]):
+        return "skincare"
+    if any(x in text for x in ["fitness", "gym", "sport"]):
+        return "fitness"
+    if any(x in text for x in ["car", "auto"]):
+        return "car-accessory"
+    if any(x in text for x in ["home", "decor", "lamp"]):
+        return "home-decor"
+    return slugify(niche)
+
+
+def collection_for(niche: str, title: str = "") -> str:
+    text = f"{niche} {title}".lower()
+    if any(x in text for x in ["skincare", "beauty", "serum"]):
+        return "Premium Skincare"
+    if any(x in text for x in ["fitness", "gym", "sport"]):
+        return "Fitness Essentials"
+    if any(x in text for x in ["car", "auto"]):
+        return "Car Accessories"
+    if any(x in text for x in ["home", "decor", "lamp"]):
+        return "Home & Decor"
+    if any(x in text for x in ["kitchen", "cuisine"]):
+        return "Kitchen Essentials"
+    return f"{niche.title()} Essentials"
+
+
+def image_keywords(niche: str, title: str = "", product_type: str = "") -> List[str]:
+    text = f"{niche} {title} {product_type}".lower()
+    if any(x in text for x in ["skincare", "serum", "beauty", "cosmetic"]):
+        return ["luxury skincare product", "beauty serum bottle", "cosmetic product", "face cream product"]
+    if any(x in text for x in ["fitness", "gym", "sport", "recovery"]):
+        return ["fitness equipment", "gym accessories", "workout gear", "sports product"]
+    if any(x in text for x in ["car", "auto", "vehicle"]):
+        return ["car accessory", "automotive product", "car interior accessory"]
+    if any(x in text for x in ["home", "decor", "wall", "lamp"]):
+        return ["modern home decor", "interior design product", "home decoration"]
+    if any(x in text for x in ["kitchen", "chef", "cooking"]):
+        return ["modern kitchen gadget", "kitchen tools", "cooking accessory"]
+    if any(x in text for x in ["pet", "dog", "cat"]):
+        return ["pet product", "dog accessory", "cat product"]
+    return [f"{niche} product", f"{niche} premium", "premium ecommerce product"]
+
+
+BRAND_PREFIXES = ["Aero", "Luma", "Nova", "Velora", "Nectar", "Hydra", "Pulse", "Aura", "Zenith", "Vita", "Core", "Elixir", "Luxe", "Prisma", "Urban", "Mira"]
+BRAND_SUFFIXES = ["Lab", "Works", "Studio", "Core", "Bloom", "Haus", "Forge", "Mode", "Care", "Nest", "Flow", "Supply"]
+
+
+def generate_brand(niche: str) -> str:
+    return random.choice(BRAND_PREFIXES) + random.choice(BRAND_SUFFIXES)
+
+
+def clean_tags(tags: Any, niche: str, brand: str, product_type: str) -> List[str]:
+    clean: List[str] = []
+    source = tags if isinstance(tags, list) else [tags] if tags else []
+    for tag in source:
+        tag = re.sub(r"[^a-zA-Z0-9À-ÿ\- ]", "", safe_text(tag).lower())
+        tag = re.sub(r"\s+", " ", tag).strip()
+        if tag and tag not in clean:
+            clean.append(tag)
+    for tag in [niche, product_type, brand, "premium", "best seller", "ai generated", "shopify"]:
+        tag = safe_text(tag).lower()
+        if tag and tag not in clean:
+            clean.append(tag)
+    return clean[:20]
+
+
+def clean_sku(value: Any, brand: str, niche: str, index: int) -> str:
+    if value:
+        sku = re.sub(r"[^A-Z0-9\-]", "-", str(value).upper())
+        sku = re.sub(r"-+", "-", sku).strip("-")
+        if len(sku) >= 6:
+            return sku[:64]
+    return f"{slugify(brand).upper()}-{slugify(niche).upper()}-{index}-{uuid.uuid4().hex[:6].upper()}"
+
+
+def local_product(niche: str, index: int) -> Dict[str, Any]:
+    brand = generate_brand(niche)
+    pt = product_type_for(niche)
+    if "skincare" in niche.lower() or "beauty" in niche.lower():
+        core = random.choice(["Renewal Serum", "Hydra Glow Cream", "Radiance Essence", "Barrier Repair Oil"])
+    elif "fitness" in niche.lower():
+        core = random.choice(["Recovery Band", "Grip Gloves", "Performance Bottle", "Training Kit"])
+    elif "car" in niche.lower():
+        core = random.choice(["Drive Organizer", "Detailing Kit", "Smart Mount", "Interior Cleaner"])
+    elif "home" in niche.lower() or "decor" in niche.lower():
+        core = random.choice(["Wall Sconce", "Ambient Lamp", "Storage Tray", "Minimal Vase"])
+    else:
+        core = random.choice(["Essentials Kit", "Premium System", "Daily Set", "Performance Pack"])
+    title = f"{brand} {core} {random.choice(['Pro', 'Elite', 'Max', 'Plus', 'X'])}"
+    price = clean_price(None, niche)
+    desc = f"""
+    <h2>{html.escape(title)}</h2>
+    <p><strong>{html.escape(title)}</strong> est un produit premium pensé pour la niche <strong>{html.escape(niche)}</strong>.</p>
+    <p>Il combine design moderne, valeur perçue élevée et utilité concrète pour créer une fiche produit crédible et prête à vendre.</p>
+    <ul>
+      <li>Design professionnel et moderne</li>
+      <li>Positionnement premium pour augmenter la conversion</li>
+      <li>Stock configuré automatiquement</li>
+      <li>Idéal pour une boutique Shopify spécialisée</li>
+    </ul>
+    <p><strong>Offre limitée :</strong> profitez d’un produit prêt pour le e-commerce.</p>
+    """
+    return {
+        "brand": brand,
+        "title": title,
+        "description": desc,
+        "price": price,
+        "compare_at_price": smart_compare_at_price(price),
+        "product_type": pt,
+        "tags": [niche, pt, brand, "premium", "best seller"],
+        "sku": clean_sku(None, brand, niche, index),
+        "barcode": generate_barcode(),
+        "vendor": brand,
+        "handle": slugify(title),
+        "seo_title": truncate(f"{title} | {niche.title()} Premium", 70),
+        "seo_description": truncate(f"Découvrez {title}, un produit premium pour {niche}. Design moderne, qualité professionnelle et livraison rapide.", 160),
+        "collection_name": collection_for(niche, title),
+        "shopify_category": detect_category(niche, title),
+        "image_query": image_keywords(niche, title, pt)[0],
+        "options": [{"name": "Color", "values": ["Black", "White"]}, {"name": "Pack", "values": ["Single", "Duo"]}],
+    }
+
+
+def validate_product(data: Dict[str, Any], niche: str, index: int) -> Dict[str, Any]:
+    fallback = local_product(niche, index)
+    brand = safe_text(data.get("brand"), fallback["brand"])
+    title = safe_text(data.get("title"), fallback["title"]).replace("**", "")
+    title = re.sub(r"^(produit premium|premium product|produit ia|ai product)\s*\d*\s*[-–:]*\s*", "", title, flags=re.I).strip()
+    if len(title) < 8:
+        title = fallback["title"]
+    product_type = safe_text(data.get("product_type"), product_type_for(niche, title))
+    price = clean_price(data.get("price", fallback["price"]), niche)
+    compare_at = clean_price(data.get("compare_at_price") or smart_compare_at_price(price), niche)
+    try:
+        if float(compare_at) <= float(price):
+            compare_at = smart_compare_at_price(price)
+    except Exception:
+        compare_at = smart_compare_at_price(price)
+    desc = safe_text(data.get("description"), fallback["description"])
+    if "<p" not in desc and "<h" not in desc and "<ul" not in desc:
+        desc = f"<h2>{html.escape(title)}</h2><p>{html.escape(desc)}</p>"
+    return {
+        "brand": brand[:60],
+        "title": truncate(title, 120),
+        "description": desc,
+        "price": price,
+        "compare_at_price": compare_at,
+        "product_type": product_type[:80],
+        "tags": clean_tags(data.get("tags", fallback["tags"]), niche, brand, product_type),
+        "sku": clean_sku(data.get("sku"), brand, niche, index),
+        "barcode": re.sub(r"\D", "", safe_text(data.get("barcode"), generate_barcode()))[:32],
+        "vendor": safe_text(data.get("vendor"), brand)[:80],
+        "handle": slugify(safe_text(data.get("handle"), title)),
+        "seo_title": truncate(safe_text(data.get("seo_title"), f"{title} | {niche.title()} Premium"), 70),
+        "seo_description": truncate(safe_text(data.get("seo_description"), f"Découvrez {title}, un produit premium pour {niche}. Qualité, design moderne et fiche optimisée Shopify."), 160),
+        "collection_name": safe_text(data.get("collection_name"), collection_for(niche, title))[:80],
+        "shopify_category": safe_text(data.get("shopify_category"), detect_category(niche, title))[:160],
+        "image_query": safe_text(data.get("image_query"), image_keywords(niche, title, product_type)[0])[:120],
+        "options": data.get("options") if isinstance(data.get("options"), list) else fallback["options"],
+    }
+
+
+def generate_product_with_mistral(niche: str, index: int) -> Dict[str, Any]:
+    if not MISTRAL_API_KEY:
+        return validate_product({}, niche, index)
+    prompt = f"""
+Tu es un expert senior Shopify, branding premium, SEO e-commerce, merchandising et conversion.
+
+Crée UN produit Shopify ultra complet pour la niche : "{niche}".
+Réponds uniquement en JSON valide. Aucun Markdown. Aucun texte autour.
+
+Remplis : brand, title, description HTML, price, compare_at_price, product_type, tags, sku, barcode, vendor, handle, seo_title, seo_description, collection_name, shopify_category, image_query, options.
+Interdit : "Produit Premium", "Produit IA", "AI Product", "Premium Product" comme titre.
+
+Format JSON exact :
+{{
+  "brand": "Nom de marque court",
+  "title": "Nom commercial premium",
+  "description": "<h2>...</h2><p>...</p><ul><li>...</li><li>...</li><li>...</li></ul><p>...</p>",
+  "price": "59.99",
+  "compare_at_price": "89.99",
+  "product_type": "{niche}",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "sku": "SKU-UNIQUE",
+  "barcode": "1234567890123",
+  "vendor": "Nom de marque",
+  "handle": "handle-propre-seo",
+  "seo_title": "Titre SEO max 70 caractères",
+  "seo_description": "Meta description SEO max 160 caractères",
+  "collection_name": "Nom collection Shopify",
+  "shopify_category": "Catégorie Shopify logique",
+  "image_query": "english Pexels product photo search query",
+  "options": [
+    {{"name": "Color", "values": ["Black", "White"]}},
+    {{"name": "Pack", "values": ["Single", "Duo"]}}
+  ]
+}}
+"""
+    try:
+        r = requests.post(
+            "https://api.mistral.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {MISTRAL_API_KEY}", "Content-Type": "application/json"},
+            json={"model": MISTRAL_MODEL, "messages": [{"role": "user", "content": prompt}], "temperature": 0.55},
+            timeout=120,
+        )
+        if r.status_code != 200:
+            print("MISTRAL ERROR:", r.status_code, r.text[:500])
+            return validate_product({}, niche, index)
+        raw = clean_json_response(r.json()["choices"][0]["message"]["content"])
+        return validate_product(raw, niche, index)
+    except Exception as e:
+        print("MISTRAL FALLBACK:", str(e))
+        return validate_product({}, niche, index)
+
+
+def get_pexels_image(product: Dict[str, Any], niche: str) -> Tuple[Optional[str], str, Optional[str]]:
+    if not PEXELS_API_KEY:
+        return None, "pexels_missing", None
+    queries = [product.get("image_query"), *image_keywords(niche, product.get("title", ""), product.get("product_type", ""))]
+    seen, unique_queries = set(), []
+    for q in queries:
+        if q and q not in seen:
+            seen.add(q)
+            unique_queries.append(q)
+    for query in unique_queries:
+        try:
+            r = requests.get(
+                "https://api.pexels.com/v1/search",
+                headers={"Authorization": PEXELS_API_KEY, "User-Agent": "AI-Shopify-Agent/6.0"},
+                params={"query": query, "per_page": 15, "orientation": "square", "size": "large"},
+                timeout=60,
+            )
+            if r.status_code != 200:
+                print("PEXELS ERROR:", r.status_code, r.text[:300])
+                continue
+            photos = r.json().get("photos", [])
+            if not photos:
+                continue
+            chosen = random.choice(photos[:10])
+            src = chosen.get("src", {})
+            url = src.get("large2x") or src.get("large") or src.get("original") or src.get("medium")
+            if url:
+                return url, f"pexels:{query}", chosen.get("photographer")
+        except Exception as e:
+            print("PEXELS ERROR:", str(e))
+    return None, "pexels_no_result", None
+
+
+def download_image_as_base64(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    try:
+        r = requests.get(url, timeout=90, headers={"User-Agent": "Mozilla/5.0 AI-Shopify-Agent/6.0"}, allow_redirects=True)
+        if r.status_code != 200 or "image" not in r.headers.get("Content-Type", "").lower():
+            return None
+        return base64.b64encode(r.content).decode("utf-8")
+    except Exception as e:
+        print("IMAGE DOWNLOAD ERROR:", str(e))
+        return None
+
+
+def shopify_request(method: str, path: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     store = normalize_shopify_store(SHOPIFY_STORE)
     if not store:
         raise ValueError("SHOPIFY_STORE missing")
     if not SHOPIFY_ACCESS_TOKEN:
         raise ValueError("SHOPIFY_ACCESS_TOKEN missing")
+    url = f"https://{store}/admin/api/{SHOPIFY_API_VERSION}/{path.lstrip('/')}"
+    r = requests.request(method, url, headers=shopify_headers(), json=payload, timeout=120)
+    try:
+        body = r.json()
+    except Exception:
+        body = {"raw": r.text}
+    return {"status_code": r.status_code, "body": body}
+
+
+def build_variants(product: Dict[str, Any]) -> List[Dict[str, Any]]:
+    colors, packs = ["Black", "White"], ["Single", "Duo"]
+    try:
+        for opt in product.get("options", []):
+            name = safe_text(opt.get("name")).lower()
+            vals = [safe_text(v) for v in opt.get("values", []) if safe_text(v)]
+            if name in ["color", "colour", "couleur"] and vals:
+                colors = vals[:3]
+            if name in ["pack", "bundle", "lot"] and vals:
+                packs = vals[:3]
+    except Exception:
+        pass
+    base_price = float(product["price"])
+    base_compare = float(product["compare_at_price"])
+    variants = []
+    for color in colors:
+        for pack in packs:
+            price, compare = base_price, base_compare
+            if pack.lower() in ["duo", "2 pack", "double"]:
+                price = round(base_price * 1.75, 2)
+                compare = round(base_compare * 1.85, 2)
+            variants.append({
+                "option1": color,
+                "option2": pack,
+                "price": f"{price:.2f}",
+                "compare_at_price": f"{compare:.2f}",
+                "sku": f"{product['sku']}-{slugify(color).upper()}-{slugify(pack).upper()}",
+                "barcode": generate_barcode(),
+                "inventory_quantity": 100,
+                "inventory_management": "shopify",
+                "inventory_policy": "deny",
+                "requires_shipping": True,
+                "fulfillment_service": "manual",
+                "taxable": True,
+                "weight": 0.4,
+                "weight_unit": "kg",
+            })
+    return variants[:9]
+
+
+def create_product(product: Dict[str, Any]) -> Dict[str, Any]:
     payload = {
         "product": {
             "title": product["title"],
             "body_html": product["description"],
-            "vendor": "AI Shopify Agent",
+            "vendor": product["vendor"],
             "product_type": product["product_type"],
             "status": "active",
+            "handle": product["handle"],
             "tags": product["tags"],
-            "variants": [{"price": product["price"], "sku": product["sku"], "inventory_quantity": 100, "inventory_management": "shopify", "requires_shipping": True}],
-            "images": [],
+            "published": True,
+            "published_scope": "global",
+            "options": [{"name": "Color"}, {"name": "Pack"}],
+            "variants": build_variants(product),
+            "metafields_global_title_tag": product["seo_title"],
+            "metafields_global_description_tag": product["seo_description"],
         }
     }
-    response = requests.post(f"https://{store}/admin/api/{SHOPIFY_API_VERSION}/products.json", headers=shopify_headers(), json=payload, timeout=120)
-    try:
-        body = response.json()
-    except Exception:
-        body = {"raw": response.text}
-    return {"status_code": response.status_code, "body": body}
+    return shopify_request("POST", "products.json", payload)
 
 
-def upload_product_image(product_id: int, image_base64: str, niche: str) -> Dict[str, Any]:
-    store = normalize_shopify_store(SHOPIFY_STORE)
-    if not store:
-        raise ValueError("SHOPIFY_STORE missing")
-    response = requests.post(
-        f"https://{store}/admin/api/{SHOPIFY_API_VERSION}/products/{product_id}/images.json",
-        headers=shopify_headers(),
-        json={"image": {"attachment": image_base64, "filename": f"{slugify(niche)}-{uuid.uuid4().hex[:8]}.jpg"}},
-        timeout=120,
-    )
+def upload_image(product_id: int, image_b64: str, product: Dict[str, Any], photographer: Optional[str]) -> Dict[str, Any]:
+    alt = truncate(f"{product['title']} - {product['product_type']} premium product" + (f" | Photo by {photographer} on Pexels" if photographer else ""), 250)
+    payload = {"image": {"attachment": image_b64, "filename": f"{product['handle']}-{uuid.uuid4().hex[:8]}.jpg", "alt": alt}}
+    return shopify_request("POST", f"products/{product_id}/images.json", payload)
+
+
+def find_collection(title: str) -> Optional[int]:
     try:
-        body = response.json()
-    except Exception:
-        body = {"raw": response.text}
-    return {"status_code": response.status_code, "body": body}
+        r = shopify_request("GET", "custom_collections.json?limit=250")
+        if r["status_code"] != 200:
+            return None
+        for c in r["body"].get("custom_collections", []):
+            if c.get("title", "").lower().strip() == title.lower().strip():
+                return c.get("id")
+    except Exception as e:
+        print("FIND COLLECTION ERROR:", str(e))
+    return None
+
+
+def ensure_collection(title: str, niche: str) -> Optional[int]:
+    found = find_collection(title)
+    if found:
+        return found
+    payload = {"custom_collection": {"title": title, "body_html": f"<p>Collection automatique pour <strong>{html.escape(niche)}</strong>.</p>", "handle": slugify(title), "published": True}}
+    r = shopify_request("POST", "custom_collections.json", payload)
+    if r["status_code"] in [200, 201]:
+        return r["body"].get("custom_collection", {}).get("id")
+    print("CREATE COLLECTION ERROR:", r)
+    return None
+
+
+def attach_collection(product_id: int, collection_id: int) -> Dict[str, Any]:
+    return shopify_request("POST", "collects.json", {"collect": {"product_id": product_id, "collection_id": collection_id}})
+
+
+def logo_svg(brand: str, niche: str) -> str:
+    initials = "".join([p[0].upper() for p in re.findall(r"[A-Za-z]+", brand)[:2]]) or brand[:2].upper()
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="120" fill="#111827"/><circle cx="256" cy="230" r="118" fill="#22c55e"/><text x="256" y="260" text-anchor="middle" font-family="Arial" font-size="120" font-weight="700" fill="white">{html.escape(initials)}</text><text x="256" y="390" text-anchor="middle" font-family="Arial" font-size="34" fill="white">{html.escape(brand[:22])}</text><text x="256" y="430" text-anchor="middle" font-family="Arial" font-size="20" fill="#d1d5db">{html.escape(niche[:30])}</text></svg>"""
+
+
+def create_metafields(product_id: int, product: Dict[str, Any], image_source: str) -> List[Dict[str, Any]]:
+    metafields = [
+        ("ai_agent", "brand", "single_line_text_field", product["brand"]),
+        ("ai_agent", "shopify_category", "single_line_text_field", product["shopify_category"]),
+        ("ai_agent", "image_source", "single_line_text_field", image_source or "unknown"),
+        ("ai_agent", "generated_at", "single_line_text_field", now_iso()),
+        ("ai_agent", "brand_logo_svg", "multi_line_text_field", logo_svg(product["brand"], product["product_type"])),
+        ("custom", "seo_title", "single_line_text_field", product["seo_title"]),
+        ("custom", "seo_description", "multi_line_text_field", product["seo_description"]),
+    ]
+    statuses = []
+    for namespace, key, field_type, value in metafields:
+        try:
+            r = shopify_request("POST", f"products/{product_id}/metafields.json", {"metafield": {"namespace": namespace, "key": key, "type": field_type, "value": str(value)}})
+            statuses.append({"key": f"{namespace}.{key}", "status": r["status_code"], "ok": r["status_code"] in [200, 201]})
+        except Exception as e:
+            statuses.append({"key": f"{namespace}.{key}", "status": None, "ok": False, "error": str(e)})
+    return statuses
 
 
 @app.get("/generate-products")
-def generate_products(niche: str, count: int = 1):
+def generate_products(niche: str = Query(..., min_length=2), count: int = Query(1, ge=1, le=50)):
     niche = safe_text(niche).lower()
-    if not niche:
-        return {"success": False, "error": "niche is required"}
-    try:
-        count = int(count)
-    except Exception:
-        count = 1
-    count = max(1, min(count, 50))
-
-    results: List[Dict[str, Any]] = []
-    products_created = 0
-    images_attached = 0
+    count = max(1, min(int(count), 50))
+    batch_id = uuid.uuid4().hex[:12]
+    results = []
+    products_created = images_attached = collections_attached = metafields_written = 0
 
     for index in range(1, count + 1):
-        result: Dict[str, Any] = {
-            "index": index,
-            "success": False,
-            "title": None,
-            "product_id": None,
-            "price": None,
-            "sku": None,
-            "product_type": None,
-            "image_source": None,
-            "final_image_url": None,
-            "image_attached": False,
-            "shopify_status": None,
-            "image_upload_status": None,
-            "errors": [],
+        result = {
+            "index": index, "batch_id": batch_id, "success": False, "title": None, "brand": None,
+            "product_id": None, "price": None, "compare_at_price": None, "sku": None, "barcode": None,
+            "handle": None, "product_type": None, "seo_title": None, "seo_description": None,
+            "collection_name": None, "collection_id": None, "collection_attached": False,
+            "shopify_category": None, "image_source": None, "final_image_url": None, "image_attached": False,
+            "shopify_status": None, "image_upload_status": None, "metafields_status": [], "errors": []
         }
         try:
             product = generate_product_with_mistral(niche, index)
-            result["title"] = product["title"]
-            result["price"] = product["price"]
-            result["sku"] = product["sku"]
-            result["product_type"] = product["product_type"]
+            for k in ["title", "brand", "price", "compare_at_price", "sku", "barcode", "handle", "product_type", "seo_title", "seo_description", "collection_name", "shopify_category"]:
+                result[k] = product.get(k)
 
-            image_url, image_source = get_best_image_url(product, niche)
-            result["final_image_url"] = image_url
-            result["image_source"] = image_source
-            image_base64 = download_image_as_base64(image_url)
+            image_url, image_source, photographer = get_pexels_image(product, niche)
+            result["final_image_url"], result["image_source"] = image_url, image_source
+            image_b64 = download_image_as_base64(image_url)
 
-            shopify_result = create_shopify_product(product)
-            result["shopify_status"] = shopify_result["status_code"]
-            if shopify_result["status_code"] not in [200, 201]:
-                result["errors"].append({"shopify_create_error": shopify_result["body"]})
-                results.append(result)
-                continue
+            shop = create_product(product)
+            result["shopify_status"] = shop["status_code"]
+            if shop["status_code"] not in [200, 201]:
+                result["errors"].append({"shopify_create_error": shop["body"]})
+                results.append(result); append_history(result); continue
 
-            product_id = shopify_result["body"].get("product", {}).get("id")
+            product_id = shop["body"].get("product", {}).get("id")
             if not product_id:
                 result["errors"].append("Shopify product created but product_id missing")
-                results.append(result)
-                continue
+                results.append(result); append_history(result); continue
 
             result["product_id"] = product_id
             products_created += 1
 
-            if image_base64:
-                image_result = upload_product_image(product_id, image_base64, niche)
-                result["image_upload_status"] = image_result["status_code"]
-                if image_result["status_code"] in [200, 201]:
-                    result["image_attached"] = True
-                    images_attached += 1
+            if image_b64:
+                img = upload_image(product_id, image_b64, product, photographer)
+                result["image_upload_status"] = img["status_code"]
+                if img["status_code"] in [200, 201]:
+                    result["image_attached"] = True; images_attached += 1
                 else:
-                    result["errors"].append({"image_upload_error": image_result["body"]})
+                    result["errors"].append({"image_upload_error": img["body"]})
             else:
-                result["errors"].append("Image could not be downloaded")
+                result["errors"].append("Pexels image missing or could not be downloaded")
 
-            result["success"] = result["product_id"] is not None
-        except Exception as error:
-            print("PRODUCT GENERATION ERROR:", str(error))
-            result["errors"].append(str(error))
+            collection_id = ensure_collection(product["collection_name"], niche)
+            result["collection_id"] = collection_id
+            if collection_id:
+                coll = attach_collection(product_id, collection_id)
+                if coll["status_code"] in [200, 201]:
+                    result["collection_attached"] = True; collections_attached += 1
+                else:
+                    result["errors"].append({"collection_attach_error": coll["body"]})
+            else:
+                result["errors"].append("Collection could not be created/found")
+
+            metas = create_metafields(product_id, product, image_source or "unknown")
+            result["metafields_status"] = metas
+            metafields_written += sum(1 for m in metas if m.get("ok"))
+
+            result["success"] = True
+        except Exception as e:
+            print("PRODUCT GENERATION ERROR:", str(e))
+            result["errors"].append(str(e))
         results.append(result)
+        append_history(result)
 
     return {
-        "success": True,
-        "version": "3.0",
-        "niche": niche,
-        "products_requested": count,
-        "products_created": products_created,
-        "images_attached": images_attached,
-        "results": results,
+        "success": True, "version": APP_VERSION, "batch_id": batch_id, "niche": niche,
+        "products_requested": count, "products_created": products_created,
+        "images_attached": images_attached, "collections_attached": collections_attached,
+        "metafields_written": metafields_written, "results": results,
     }
