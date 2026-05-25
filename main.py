@@ -7,82 +7,70 @@ import json
 import re
 import base64
 import uuid
+from typing import Any, Dict, List, Optional
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(title="AI Shopify Agent")
 
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
-
-FALLBACK_IMAGES = {
-    "fitness": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200",
-    "skincare": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1200",
-    "kitchen": "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1200",
-    "car": "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200",
-}
 
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
-    with open("index.html", "r", encoding="utf-8") as file:
-        return file.read()
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as file:
+            return file.read()
+
+    return """
+    <html>
+        <body style="font-family: Arial; padding: 40px;">
+            <h1>AI Shopify Agent</h1>
+            <p>Backend is running.</p>
+            <a href="/health">Health check</a>
+        </body>
+    </html>
+    """
 
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "mistral": "LOADED" if MISTRAL_API_KEY else "MISSING",
+        "shopify_store": "LOADED" if SHOPIFY_STORE else "MISSING",
+        "shopify_token": "LOADED" if SHOPIFY_ACCESS_TOKEN else "MISSING",
+    }
 
 
-def clean_json(text):
+def clean_json(text: str) -> Dict[str, Any]:
     text = re.sub(r"```json|```", "", text).strip()
     start = text.find("{")
     end = text.rfind("}") + 1
-    if start != -1 and end != -1:
-        text = text[start:end]
-    return json.loads(text)
+
+    if start == -1 or end <= start:
+        raise ValueError("No JSON object found")
+
+    return json.loads(text[start:end])
 
 
-def get_fallback_image(niche, title="product"):
+def get_fallback_image(niche: str, title: str = "product") -> str:
     keyword = f"{niche} {title}".replace(" ", ",")
     random_id = uuid.uuid4().hex
     return f"https://source.unsplash.com/1200x800/?{keyword}&sig={random_id}"
 
 
-def generate_ai_image(prompt):
+def generate_ai_image(prompt: str) -> Optional[str]:
+    # MVP mode: no paid image generation.
+    # Later you can replace this with Replicate / Flux / OpenAI image.
     return None
 
 
-def upload_to_cloudinary(file_path):
-    if not CLOUDINARY_CLOUD_NAME:
-        return None
-
-    url = f"https://api.cloudinary.com/v1_1/{CLOUDINARY_CLOUD_NAME}/image/upload"
-
-    with open(file_path, "rb") as file:
-        response = requests.post(
-            url,
-            files={"file": file},
-            data={"upload_preset": "shopify_ai"},
-            timeout=120
-        )
-
-    if response.status_code != 200:
-        print("CLOUDINARY ERROR:", response.text)
-        return None
-
-    return response.json().get("secure_url")
-
-
-@app.get("/generate-products")
-def generate_products(niche: str, count: int = 3):
-    results = []
-
-    for i in range(count):
-        prompt = f"""
+def generate_product_with_mistral(niche: str, index: int) -> Dict[str, Any]:
+    prompt = f"""
 Tu es un expert e-commerce Shopify.
 
 Crée 1 produit premium réaliste pour la niche : {niche}
@@ -100,140 +88,208 @@ Format exact :
 }}
 """
 
-        mistral_response = requests.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {MISTRAL_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "open-mistral-7b",
-                "messages": [{"role": "user", "content": prompt}]
-            },
-            timeout=120
-        )
+    if not MISTRAL_API_KEY:
+        raise ValueError("MISTRAL_API_KEY missing")
 
-        if mistral_response.status_code != 200:
-            results.append({
-                "error": "Erreur Mistral",
-                "details": mistral_response.text
-            })
-            continue
+    response = requests.post(
+        "https://api.mistral.ai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {MISTRAL_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "open-mistral-7b",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.8,
+        },
+        timeout=120,
+    )
 
-        content = mistral_response.json()["choices"][0]["message"]["content"]
+    if response.status_code != 200:
+        raise ValueError(f"Mistral error: {response.text}")
 
-        try:
-            ai_product = clean_json(content)
-        except Exception:
-            ai_product = {
-                "title": f"Produit Premium {i + 1} - {niche}",
-                "description": content,
-                "price": "49.99",
-                "product_type": niche,
-                "tags": [niche, "AI Product", "Premium"],
-                "sku": f"AI-{niche.upper()}-{i + 1}"
-            }
+    content = response.json()["choices"][0]["message"]["content"]
 
-        image_prompt = (
-    f"Premium ecommerce product photography for {ai_product.get('title')} "
-    f"in the {niche} niche. "
-    f"Ultra realistic studio lighting, white luxury background, "
-    f"professional commercial product render, highly detailed, "
-    f"unique composition, modern ecommerce style, no text, no watermark."
-)
-
-        generated_image = generate_ai_image(image_prompt)
-
-        cloudinary_image_url = None
-        if generated_image:
-            cloudinary_image_url = upload_to_cloudinary(generated_image)
-
-        final_image_url = cloudinary_image_url or get_fallback_image(
-    niche,
-    ai_product.get("title", "product")
-)
-
-        image_attachment = None
-        try:
-            image_response = requests.get(final_image_url, timeout=60)
-            if image_response.status_code == 200:
-                image_attachment = base64.b64encode(image_response.content).decode()
-        except Exception as e:
-            print("IMAGE DOWNLOAD ERROR:", str(e))
-
-        product_payload = {
-            "product": {
-                "title": ai_product.get("title", f"Produit IA {i + 1}"),
-                "body_html": ai_product.get("description", ""),
-                "vendor": "AI Shopify Agent",
-                "product_type": ai_product.get("product_type", niche),
-                "status": "active",
-                "tags": ai_product.get("tags", [niche, "AI Product", "Premium"]),
-                "variants": [
-                    {
-                        "price": ai_product.get("price", "49.99"),
-                        "inventory_quantity": 100,
-                        "inventory_management": "shopify",
-                        "sku": ai_product.get("sku", f"AI-{niche.upper()}-{i + 1}")
-                    }
-                ],
-                "images": []
-            }
+    try:
+        product = clean_json(content)
+    except Exception:
+        product = {
+            "title": f"Produit Premium {index} - {niche}",
+            "description": content,
+            "price": "49.99",
+            "product_type": niche,
+            "tags": [niche, "AI Product", "Premium"],
+            "sku": f"AI-{niche.upper()}-{index}",
         }
 
-        shopify_response = requests.post(
-            f"https://{SHOPIFY_STORE}/admin/api/2025-01/products.json",
-            headers={
-                "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
-                "Content-Type": "application/json"
-            },
-            json=product_payload,
-            timeout=120
-        )
+    product.setdefault("title", f"Produit IA {index}")
+    product.setdefault("description", "")
+    product.setdefault("price", "49.99")
+    product.setdefault("product_type", niche)
+    product.setdefault("tags", [niche, "AI Product", "Premium"])
+    product.setdefault("sku", f"AI-{niche.upper()}-{index}")
+
+    return product
+
+
+def download_image_as_base64(image_url: str) -> Optional[str]:
+    try:
+        response = requests.get(image_url, timeout=60)
+        if response.status_code != 200:
+            print("IMAGE DOWNLOAD ERROR:", response.status_code, response.text[:300])
+            return None
+
+        return base64.b64encode(response.content).decode("utf-8")
+
+    except Exception as error:
+        print("IMAGE DOWNLOAD EXCEPTION:", str(error))
+        return None
+
+
+def create_shopify_product(product: Dict[str, Any], niche: str) -> Dict[str, Any]:
+    if not SHOPIFY_STORE or not SHOPIFY_ACCESS_TOKEN:
+        raise ValueError("Shopify variables missing")
+
+    payload = {
+        "product": {
+            "title": product.get("title"),
+            "body_html": product.get("description", ""),
+            "vendor": "AI Shopify Agent",
+            "product_type": product.get("product_type", niche),
+            "status": "active",
+            "tags": product.get("tags", []),
+            "variants": [
+                {
+                    "price": product.get("price", "49.99"),
+                    "inventory_quantity": 100,
+                    "inventory_management": "shopify",
+                    "sku": product.get("sku"),
+                }
+            ],
+            "images": [],
+        }
+    }
+
+    response = requests.post(
+        f"https://{SHOPIFY_STORE}/admin/api/2025-01/products.json",
+        headers={
+            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=120,
+    )
+
+    try:
+        body = response.json()
+    except Exception:
+        body = {"text": response.text}
+
+    return {
+        "status_code": response.status_code,
+        "body": body,
+    }
+
+
+def upload_image_to_shopify(product_id: int, image_base64: str, niche: str) -> Dict[str, Any]:
+    response = requests.post(
+        f"https://{SHOPIFY_STORE}/admin/api/2025-01/products/{product_id}/images.json",
+        headers={
+            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "Content-Type": "application/json",
+        },
+        json={
+            "image": {
+                "attachment": image_base64,
+                "filename": f"{niche}-product.png",
+            }
+        },
+        timeout=120,
+    )
+
+    try:
+        body = response.json()
+    except Exception:
+        body = {"text": response.text}
+
+    return {
+        "status_code": response.status_code,
+        "body": body,
+    }
+
+
+@app.get("/generate-products")
+def generate_products(niche: str, count: int = 1):
+    count = max(1, min(count, 50))
+
+    results: List[Dict[str, Any]] = []
+    products_created = 0
+
+    for index in range(1, count + 1):
+        item_result = {
+            "index": index,
+            "title": None,
+            "shopify_status": None,
+            "product_id": None,
+            "final_image_url": None,
+            "image_attached": False,
+            "image_upload_status": None,
+            "errors": [],
+        }
 
         try:
-            shopify_json = shopify_response.json()
-        except Exception:
-            shopify_json = {"text": shopify_response.text}
+            ai_product = generate_product_with_mistral(niche, index)
+            item_result["title"] = ai_product.get("title")
 
-        product_id = shopify_json.get("product", {}).get("id")
-        image_upload_response = None
-
-        if product_id and image_attachment:
-            image_upload_response = requests.post(
-                f"https://{SHOPIFY_STORE}/admin/api/2025-01/products/{product_id}/images.json",
-                headers={
-                    "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "image": {
-                        "attachment": image_attachment,
-                        "filename": f"{niche}-product.png"
-                    }
-                },
-                timeout=120
+            image_prompt = (
+                f"Premium ecommerce product photography for {ai_product.get('title')} "
+                f"in the {niche} niche. Ultra realistic studio lighting, white luxury background, "
+                f"professional commercial product render, no text, no watermark."
             )
 
-            print(
-                "SHOPIFY IMAGE UPLOAD:",
-                image_upload_response.status_code,
-                image_upload_response.text
+            generated_image = generate_ai_image(image_prompt)
+
+            final_image_url = get_fallback_image(
+                niche,
+                ai_product.get("title", "product"),
             )
 
-        results.append({
-            "shopify_status": shopify_response.status_code,
-            "image_file_created": generated_image,
-            "cloudinary_image_url": cloudinary_image_url,
-            "final_image_url": final_image_url,
-            "image_attached": image_attachment is not None,
-            "shopify_response": shopify_json,
-            "image_upload_status": image_upload_response.status_code if image_upload_response else None,
-            "image_upload_response": image_upload_response.text if image_upload_response else None
-        })
+            item_result["final_image_url"] = final_image_url
+
+            image_base64 = download_image_as_base64(final_image_url)
+
+            shopify_result = create_shopify_product(ai_product, niche)
+            item_result["shopify_status"] = shopify_result["status_code"]
+
+            shopify_body = shopify_result["body"]
+            product_id = shopify_body.get("product", {}).get("id")
+
+            if not product_id:
+                item_result["errors"].append(shopify_body)
+                results.append(item_result)
+                continue
+
+            products_created += 1
+            item_result["product_id"] = product_id
+
+            if image_base64:
+                image_upload = upload_image_to_shopify(product_id, image_base64, niche)
+                item_result["image_upload_status"] = image_upload["status_code"]
+                item_result["image_attached"] = image_upload["status_code"] in [200, 201]
+
+                if not item_result["image_attached"]:
+                    item_result["errors"].append(image_upload["body"])
+            else:
+                item_result["errors"].append("Image could not be downloaded")
+
+        except Exception as error:
+            item_result["errors"].append(str(error))
+
+        results.append(item_result)
 
     return {
         "success": True,
-        "products_created": count,
-        "results": results
+        "products_requested": count,
+        "products_created": products_created,
+        "results": results,
     }
