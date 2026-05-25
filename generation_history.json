@@ -124,5 +124,950 @@
       }
     ],
     "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "a52b47485449",
+    "success": true,
+    "title": "AeroBloom Performance Bottle Elite",
+    "brand": "AeroBloom",
+    "product_id": 15108638965805,
+    "price": "49.99",
+    "compare_at_price": "82.99",
+    "sku": "AEROBLOOM-FITNESS-1-B96A2E",
+    "barcode": "8380185064956",
+    "handle": "aerobloom-performance-bottle-elite",
+    "product_type": "fitness",
+    "seo_title": "AeroBloom Performance Bottle Elite | Fitness Premium",
+    "seo_description": "Découvrez AeroBloom Performance Bottle Elite, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/15836972/pexels-photo-15836972.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "3ca636420157",
+    "success": true,
+    "title": "PrismaLab Recovery Band Pro",
+    "brand": "PrismaLab",
+    "product_id": 15108639031341,
+    "price": "79.99",
+    "compare_at_price": "131.99",
+    "sku": "PRISMALAB-FITNESS-1-0E3AE5",
+    "barcode": "8120454867269",
+    "handle": "prismalab-recovery-band-pro",
+    "product_type": "fitness",
+    "seo_title": "PrismaLab Recovery Band Pro | Fitness Premium",
+    "seo_description": "Découvrez PrismaLab Recovery Band Pro, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/11585118/pexels-photo-11585118.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 2,
+    "batch_id": "a52b47485449",
+    "success": true,
+    "title": "MiraMode Grip Gloves Elite",
+    "brand": "MiraMode",
+    "product_id": 15108639064109,
+    "price": "79.99",
+    "compare_at_price": "115.99",
+    "sku": "MIRAMODE-FITNESS-2-EEFBCF",
+    "barcode": "8597291700177",
+    "handle": "miramode-grip-gloves-elite",
+    "product_type": "fitness",
+    "seo_title": "MiraMode Grip Gloves Elite | Fitness Premium",
+    "seo_description": "Découvrez MiraMode Grip Gloves Elite, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/34214388/pexels-photo-34214388.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "ffdad724e619",
+    "success": true,
+    "title": "NovaCare Training Kit X",
+    "brand": "NovaCare",
+    "product_id": 15108639096877,
+    "price": "69.99",
+    "compare_at_price": "101.99",
+    "sku": "NOVACARE-FITNESS-1-30AD76",
+    "barcode": "8167543425131",
+    "handle": "novacare-training-kit-x",
+    "product_type": "fitness",
+    "seo_title": "NovaCare Training Kit X | Fitness Premium",
+    "seo_description": "Découvrez NovaCare Training Kit X, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/15367731/pexels-photo-15367731.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 2,
+    "batch_id": "3ca636420157",
+    "success": true,
+    "title": "LumaMode Performance Bottle X",
+    "brand": "LumaMode",
+    "product_id": 15108639129645,
+    "price": "59.99",
+    "compare_at_price": "92.99",
+    "sku": "LUMAMODE-FITNESS-2-0E11DA",
+    "barcode": "8985884138460",
+    "handle": "lumamode-performance-bottle-x",
+    "product_type": "fitness",
+    "seo_title": "LumaMode Performance Bottle X | Fitness Premium",
+    "seo_description": "Découvrez LumaMode Performance Bottle X, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/15836972/pexels-photo-15836972.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "a4b2defa8d79",
+    "success": true,
+    "title": "PulseBloom Performance Bottle Plus",
+    "brand": "PulseBloom",
+    "product_id": 15108639162413,
+    "price": "69.99",
+    "compare_at_price": "115.99",
+    "sku": "PULSEBLOOM-FITNESS-1-9FCE9E",
+    "barcode": "8699153517629",
+    "handle": "pulsebloom-performance-bottle-plus",
+    "product_type": "fitness",
+    "seo_title": "PulseBloom Performance Bottle Plus | Fitness Premium",
+    "seo_description": "Découvrez PulseBloom Performance Bottle Plus, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/11767210/pexels-photo-11767210.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 3,
+    "batch_id": "a52b47485449",
+    "success": true,
+    "title": "GripPro Elite – Gants de Musculation Anti-Dérive Technologiques",
+    "brand": "Veloce",
+    "product_id": 15108639195181,
+    "price": "59.99",
+    "compare_at_price": "89.99",
+    "sku": "VELOCE-GRIP-ELITE-BLACK-SINGLE",
+    "barcode": "7894563210987",
+    "handle": "gants-grip-pro-elite",
+    "product_type": "fitness|equipment|grip|training",
+    "seo_title": "Gants Musculation Anti-Dérive – GripPro Elite",
+    "seo_description": "Découvrez les gants de musculation GripPro Elite avec technologie DryLock™ pour une prise ultra-stable, ventilation optimisée et durabilité extrême. Idéaux p...",
+    "collection_name": "Équipements Fitness Premium",
+    "collection_id": 506048086061,
+    "collection_attached": true,
+    "shopify_category": "Fitness > Équipements d'entraînement > Accessoires",
+    "image_source": "pexels:black premium fitness grip gloves for weightlifting close up with hands holding dumbbell professional studio lighting hi",
+    "final_image_url": "https://images.pexels.com/photos/9271569/pexels-photo-9271569.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 2,
+    "batch_id": "ffdad724e619",
+    "success": true,
+    "title": "VitaWorks Training Kit Plus",
+    "brand": "VitaWorks",
+    "product_id": 15108639260717,
+    "price": "79.99",
+    "compare_at_price": "115.99",
+    "sku": "VITAWORKS-FITNESS-2-586A50",
+    "barcode": "8678885201221",
+    "handle": "vitaworks-training-kit-plus",
+    "product_type": "fitness",
+    "seo_title": "VitaWorks Training Kit Plus | Fitness Premium",
+    "seo_description": "Découvrez VitaWorks Training Kit Plus, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/11767210/pexels-photo-11767210.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 2,
+    "batch_id": "a4b2defa8d79",
+    "success": true,
+    "title": "NovaHaus Grip Gloves Max",
+    "brand": "NovaHaus",
+    "product_id": 15108639359021,
+    "price": "59.99",
+    "compare_at_price": "92.99",
+    "sku": "NOVAHAUS-FITNESS-2-A16FAC",
+    "barcode": "8080876396165",
+    "handle": "novahaus-grip-gloves-max",
+    "product_type": "fitness",
+    "seo_title": "NovaHaus Grip Gloves Max | Fitness Premium",
+    "seo_description": "Découvrez NovaHaus Grip Gloves Max, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/9666305/pexels-photo-9666305.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 1,
+    "batch_id": "7a36f8a2da2f",
+    "success": true,
+    "title": "VitaForge Performance Bottle Elite",
+    "brand": "VitaForge",
+    "product_id": 15108639293485,
+    "price": "59.99",
+    "compare_at_price": "86.99",
+    "sku": "VITAFORGE-FITNESS-1-3E0556",
+    "barcode": "8300675583391",
+    "handle": "vitaforge-performance-bottle-elite",
+    "product_type": "fitness",
+    "seo_title": "VitaForge Performance Bottle Elite | Fitness Premium",
+    "seo_description": "Découvrez VitaForge Performance Bottle Elite, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/3394653/pexels-photo-3394653.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 3,
+    "batch_id": "3ca636420157",
+    "success": true,
+    "title": "GripPro Elite – Gants de Musculation Anti-Dérive Technologiques",
+    "brand": "VITALIS",
+    "product_id": 15108639326253,
+    "price": "59.99",
+    "compare_at_price": "89.99",
+    "sku": "VITALIS-GRIP-ELITE-BLACK",
+    "barcode": "7894563210987",
+    "handle": "gants-de-muscu-grip-pro-elite",
+    "product_type": "fitness-accessoires",
+    "seo_title": "Gants Muscu Anti-Dérive GripPro Elite – Performance Absolue",
+    "seo_description": "Découvrez les gants de musculation GripPro Elite avec technologie DryLock™. Anti-glisse, respirants et renforcés Kevlar™ pour haltères, barres et kettlebells...",
+    "collection_name": "Équipement Pro",
+    "collection_id": 506048151597,
+    "collection_attached": true,
+    "shopify_category": "Accessoires de Fitness",
+    "image_source": "pexels:high resolution black and white grip gloves for weightlifting with traction pattern and mesh ventilation",
+    "final_image_url": "https://images.pexels.com/photos/20818887/pexels-photo-20818887.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 4,
+    "batch_id": "a52b47485449",
+    "success": true,
+    "title": "AeroCare Grip Gloves X",
+    "brand": "AeroCare",
+    "product_id": 15108639391789,
+    "price": "69.99",
+    "compare_at_price": "94.99",
+    "sku": "AEROCARE-FITNESS-4-C2005F",
+    "barcode": "8944120530195",
+    "handle": "aerocare-grip-gloves-x",
+    "product_type": "fitness",
+    "seo_title": "AeroCare Grip Gloves X | Fitness Premium",
+    "seo_description": "Découvrez AeroCare Grip Gloves X, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/34214388/pexels-photo-34214388.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 3,
+    "batch_id": "ffdad724e619",
+    "success": true,
+    "title": "LumaStudio Performance Bottle Pro",
+    "brand": "LumaStudio",
+    "product_id": 15108639457325,
+    "price": "49.99",
+    "compare_at_price": "72.99",
+    "sku": "LUMASTUDIO-FITNESS-3-20B609",
+    "barcode": "8636162016675",
+    "handle": "lumastudio-performance-bottle-pro",
+    "product_type": "fitness",
+    "seo_title": "LumaStudio Performance Bottle Pro | Fitness Premium",
+    "seo_description": "Découvrez LumaStudio Performance Bottle Pro, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/11767210/pexels-photo-11767210.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 3,
+    "batch_id": "a4b2defa8d79",
+    "success": true,
+    "title": "GripPro Elite – Gants de Musculation Anti-Dérapants avec Renforts en Kevlar™ & Câbles de Traction Intégrés",
+    "brand": "Veloce",
+    "product_id": 15108639522861,
+    "price": "59.99",
+    "compare_at_price": "89.99",
+    "sku": "VELOCE-GRIP-ELITE-BLACK-001",
+    "barcode": "7890123456789",
+    "handle": "gants-grip-pro-elite-kevlar",
+    "product_type": "fitness-accessoires",
+    "seo_title": "Gants GripPro Elite – Kevlar™ Anti-Dérapants | Fitness Premium",
+    "seo_description": "Découvrez les gants de musculation GripPro Elite avec renforts Kevlar™ et câbles de traction intégrés pour +30% de force. Anti-transpiration, certifiés NSF,...",
+    "collection_name": "Équipements High-Performance",
+    "collection_id": 506048184365,
+    "collection_attached": true,
+    "shopify_category": "Accessoires Fitness",
+    "image_source": "pexels:high-resolution black fitness grip gloves with kevlar reinforcement and integrated traction cables, professional athlete",
+    "final_image_url": "https://images.pexels.com/photos/11767210/pexels-photo-11767210.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "index": 5,
+    "batch_id": "a52b47485449",
+    "success": true,
+    "title": "PulseForge Performance Bottle Elite",
+    "brand": "PulseForge",
+    "product_id": 15108639653933,
+    "price": "69.99",
+    "compare_at_price": "94.99",
+    "sku": "PULSEFORGE-FITNESS-5-0793D7",
+    "barcode": "8933997877756",
+    "handle": "pulseforge-performance-bottle-elite",
+    "product_type": "fitness",
+    "seo_title": "PulseForge Performance Bottle Elite | Fitness Premium",
+    "seo_description": "Découvrez PulseForge Performance Bottle Elite, un produit premium pour fitness. Qualité, design moderne et fiche optimisée Shopify.",
+    "collection_name": "Fitness Essentials",
+    "collection_id": 506047561773,
+    "collection_attached": true,
+    "shopify_category": "Sporting Goods > Exercise & Fitness",
+    "image_source": "pexels:fitness equipment",
+    "final_image_url": "https://images.pexels.com/photos/9666305/pexels-photo-9666305.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    "image_attached": true,
+    "shopify_status": 201,
+    "image_upload_status": 200,
+    "metafields_status": [
+      {
+        "key": "ai_agent.brand",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.shopify_category",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.image_source",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.generated_at",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "ai_agent.brand_logo_svg",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_title",
+        "status": 201,
+        "ok": true
+      },
+      {
+        "key": "custom.seo_description",
+        "status": 201,
+        "ok": true
+      }
+    ],
+    "errors": []
   }
 ]

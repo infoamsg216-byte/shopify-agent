@@ -3,38 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Shopify Agent</title>
+  <title>AI Shopify Agent V9</title>
   <style>
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#0b0f14;color:#fff}
-    .wrap{max-width:1180px;margin:auto;padding:32px}
-    .hero{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:24px}
-    .card{background:#151b23;border:1px solid #263241;border-radius:22px;padding:24px;box-shadow:0 18px 60px #0005}
-    h1{margin:0 0 10px;font-size:38px} p{color:#aab6c5}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#070b10;color:#fff}
+    .wrap{max-width:1260px;margin:auto;padding:28px}
+    .card{background:#121922;border:1px solid #263241;border-radius:24px;padding:26px;box-shadow:0 20px 70px #0007;margin-bottom:22px}
+    h1{margin:0 0 8px;font-size:42px}.muted{color:#aab6c5}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    label{font-weight:700;margin:10px 0 8px;display:block}
-    input,select{width:100%;padding:16px;border-radius:14px;border:1px solid #344255;background:#0f141b;color:white;font-size:16px}
+    label{font-weight:800;margin:12px 0 8px;display:block}
+    input,select{width:100%;padding:16px;border-radius:14px;border:1px solid #344255;background:#0d131b;color:white;font-size:16px}
     .buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
-    button{border:0;border-radius:14px;padding:16px 20px;font-weight:800;font-size:16px;cursor:pointer}
-    .primary{background:#05c46b;color:white}.secondary{background:#243246;color:white}.danger{background:#ef4444;color:white}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
-    .stat{background:#0f141b;border:1px solid #263241;border-radius:16px;padding:16px}
-    .stat b{font-size:26px;display:block}
-    .status{margin-top:16px;background:#0f141b;border-radius:16px;padding:16px;white-space:pre-wrap}
+    button,a.btn{border:0;border-radius:14px;padding:15px 18px;font-weight:900;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block}
+    .primary{background:#05c46b;color:white}.secondary{background:#243246;color:white}.danger{background:#ef4444;color:white}.gold{background:#f59e0b;color:#111}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px}
+    .stat{background:#0d131b;border:1px solid #263241;border-radius:16px;padding:16px}.stat b{font-size:26px;display:block}
+    .status{margin-top:16px;background:#0d131b;border-radius:16px;padding:16px;white-space:pre-wrap;max-height:240px;overflow:auto}
     .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:20px}
-    .product{background:#151b23;border:1px solid #263241;border-radius:18px;overflow:hidden}
-    .product img{width:100%;height:190px;object-fit:cover;background:#0f141b}
-    .product .body{padding:16px}.product h3{margin:0 0 8px;font-size:17px}.meta{color:#aab6c5;font-size:13px}
-    .pill{display:inline-block;background:#073b28;color:#40ff9f;padding:6px 10px;border-radius:99px;font-size:12px;font-weight:800;margin-top:8px}
-    @media(max-width:760px){.grid,.stats{grid-template-columns:1fr}.wrap{padding:16px}h1{font-size:30px}}
+    .product{background:#121922;border:1px solid #263241;border-radius:18px;overflow:hidden}
+    .product img{width:100%;height:190px;object-fit:cover;background:#0d131b}
+    .body{padding:16px}.product h3{margin:0 0 8px;font-size:17px}.meta{color:#aab6c5;font-size:13px;line-height:1.5}
+    .pill{display:inline-block;background:#073b28;color:#40ff9f;padding:6px 10px;border-radius:99px;font-size:12px;font-weight:900;margin-top:8px}
+    @media(max-width:850px){.grid,.stats{grid-template-columns:1fr}.wrap{padding:14px}h1{font-size:30px}}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card hero">
-      <div>
-        <h1>AI Shopify Agent 🚀</h1>
-        <p>Génère des produits Shopify complets : images Pexels, SEO, collections, variantes, stock, fournisseur, prix barré, metafields et historique.</p>
-      </div>
+    <div class="card">
+      <h1>AI Shopify Agent V9 🚀</h1>
+      <p class="muted">Autopilot Shopify : produits, images Pexels, SEO, collections, variantes, stock, fournisseur, prix barré, metafields, historique, CSV.</p>
+
       <div class="grid">
         <div>
           <label>Niche</label>
@@ -45,75 +42,101 @@
           <select id="count">
             <option value="1">1 produit</option>
             <option value="3" selected>3 produits</option>
-            <option value="10">Generate 10 products</option>
-            <option value="50">Generate 50 products</option>
+            <option value="10">Generate 10</option>
+            <option value="50">Generate 50</option>
           </select>
         </div>
       </div>
+
+      <label>Autopilot niches séparées par virgule</label>
+      <input id="niches" value="fitness,skincare,home" />
+
       <div class="buttons">
         <button class="primary" onclick="generate()">Générer produits</button>
         <button class="secondary" onclick="quick(10)">Generate 10</button>
         <button class="secondary" onclick="quick(50)">Generate 50</button>
+        <button class="gold" onclick="autopilot()">Autopilot</button>
         <button class="secondary" onclick="loadHistory()">Historique</button>
+        <a class="btn secondary" href="/export-csv">Export CSV</a>
         <button class="danger" onclick="clearHistory()">Clear</button>
       </div>
+
       <div class="stats">
-        <div class="stat"><b id="created">0</b><span>Produits créés</span></div>
-        <div class="stat"><b id="images">0</b><span>Images attachées</span></div>
+        <div class="stat"><b id="created">0</b><span>Produits</span></div>
+        <div class="stat"><b id="images">0</b><span>Images</span></div>
         <div class="stat"><b id="collections">0</b><span>Collections</span></div>
         <div class="stat"><b id="metas">0</b><span>Metafields</span></div>
+        <div class="stat"><b id="success">0%</b><span>Succès</span></div>
       </div>
+
       <div id="status" class="status">Prêt.</div>
     </div>
+
     <div id="products" class="products"></div>
   </div>
 
-  <script>
-    function setStatus(msg){ document.getElementById('status').textContent = msg; }
-    function setStats(data){
-      document.getElementById('created').textContent = data.products_created || 0;
-      document.getElementById('images').textContent = data.images_attached || 0;
-      document.getElementById('collections').textContent = data.collections_attached || 0;
-      document.getElementById('metas').textContent = data.metafields_written || 0;
-    }
-    function card(item){
-      const img = item.final_image_url ? `<img src="${item.final_image_url}" />` : `<div style="height:190px;display:grid;place-items:center;background:#0f141b;color:#667">No image</div>`;
-      return `<div class="product">${img}<div class="body">
-        <h3>${item.title || 'Sans titre'}</h3>
-        <div class="meta">${item.brand || ''} · ${item.product_type || ''}</div>
-        <div class="meta">Prix: ${item.price || '-'} · Barré: ${item.compare_at_price || '-'}</div>
-        <div class="meta">Collection: ${item.collection_name || '-'}</div>
-        <div class="meta">SEO: ${item.seo_title || '-'}</div>
-        <div class="pill">${item.success ? 'Créé Shopify' : 'Erreur'}</div>
-      </div></div>`;
-    }
-    function render(items){ document.getElementById('products').innerHTML = (items || []).map(card).join(''); }
-    async function generate(){
-      const niche = encodeURIComponent(document.getElementById('niche').value || 'fitness');
-      const count = document.getElementById('count').value;
-      setStatus(`Génération en cours (${count})...`);
-      render([]);
-      try{
-        const res = await fetch(`/generate-products?niche=${niche}&count=${count}`);
-        const data = await res.json();
-        setStats(data);
-        render(data.results || []);
-        setStatus(JSON.stringify({success:data.success,batch_id:data.batch_id,created:data.products_created,images:data.images_attached,collections:data.collections_attached,metafields:data.metafields_written}, null, 2));
-      }catch(e){ setStatus("Erreur: " + e.message); }
-    }
-    function quick(n){ document.getElementById('count').value = String(n); generate(); }
-    async function loadHistory(){
-      setStatus("Chargement historique...");
-      const res = await fetch('/history?limit=50');
-      const data = await res.json();
-      render(data.items || []);
-      setStatus(`${data.count || 0} éléments dans l'historique.`);
-    }
-    async function clearHistory(){
-      await fetch('/clear-history');
-      render([]);
-      setStatus("Historique supprimé.");
-    }
-  </script>
+<script>
+function setStatus(msg){ document.getElementById('status').textContent = msg; }
+function setStats(data){
+  const created = data.products_created || data.total_created || 0;
+  const requested = data.products_requested || (data.runs ? data.runs.reduce((a,r)=>a+(r.products_requested||0),0) : created);
+  document.getElementById('created').textContent = created;
+  document.getElementById('images').textContent = data.images_attached || data.total_images || 0;
+  document.getElementById('collections').textContent = data.collections_attached || data.total_collections || 0;
+  document.getElementById('metas').textContent = data.metafields_written || data.total_metafields || 0;
+  document.getElementById('success').textContent = requested ? Math.round(created/requested*100)+'%' : '0%';
+}
+function card(item){
+  const img = item.final_image_url ? `<img src="${item.final_image_url}" />` : `<div style="height:190px;display:grid;place-items:center;background:#0d131b;color:#667">No image</div>`;
+  return `<div class="product">${img}<div class="body">
+    <h3>${item.title || 'Sans titre'}</h3>
+    <div class="meta">${item.brand || ''} · ${item.product_type || ''}</div>
+    <div class="meta">Prix: ${item.price || '-'} · Barré: ${item.compare_at_price || '-'}</div>
+    <div class="meta">Collection: ${item.collection_name || '-'}</div>
+    <div class="meta">SEO: ${item.seo_title || '-'}</div>
+    <div class="meta">ID: ${item.product_id || '-'}</div>
+    <div class="pill">${item.success ? 'Créé Shopify' : 'Erreur'}</div>
+  </div></div>`;
+}
+function render(items){ document.getElementById('products').innerHTML = (items || []).map(card).join(''); }
+function allResults(data){
+  if(data.results) return data.results;
+  if(data.runs) return data.runs.flatMap(r => r.results || []);
+  return [];
+}
+async function generate(){
+  const niche = encodeURIComponent(document.getElementById('niche').value || 'fitness');
+  const count = document.getElementById('count').value;
+  setStatus(`Génération en cours (${count})...`);
+  render([]);
+  try{
+    const res = await fetch(`/generate-products?niche=${niche}&count=${count}`);
+    const data = await res.json();
+    setStats(data); render(allResults(data));
+    setStatus(JSON.stringify({success:data.success,batch_id:data.batch_id,created:data.products_created,images:data.images_attached,collections:data.collections_attached,metafields:data.metafields_written}, null, 2));
+  }catch(e){ setStatus("Erreur: " + e.message); }
+}
+function quick(n){ document.getElementById('count').value = String(n); generate(); }
+async function autopilot(){
+  const niches = encodeURIComponent(document.getElementById('niches').value || 'fitness,skincare,home');
+  const count = document.getElementById('count').value;
+  setStatus(`Autopilot en cours...`);
+  render([]);
+  try{
+    const res = await fetch(`/autopilot?niches=${niches}&count_per_niche=${count}`);
+    const data = await res.json();
+    setStats(data); render(allResults(data));
+    setStatus(JSON.stringify({success:data.success,mode:data.mode,total_created:data.total_created,total_images:data.total_images,total_collections:data.total_collections,total_metafields:data.total_metafields}, null, 2));
+  }catch(e){ setStatus("Erreur: " + e.message); }
+}
+async function loadHistory(){
+  setStatus("Chargement historique...");
+  const res = await fetch('/history?limit=100');
+  const data = await res.json();
+  render(data.items || []);
+  setStatus(`${data.count || 0} éléments dans l'historique.`);
+}
+async function clearHistory(){ await fetch('/clear-history'); render([]); setStatus("Historique supprimé."); }
+</script>
 </body>
 </html>

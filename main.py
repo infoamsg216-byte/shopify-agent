@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from dotenv import load_dotenv
-import os, re, json, uuid, base64, random, html
+import os, re, json, uuid, base64, random, html, csv, io
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 load_dotenv()
 
-APP_VERSION = "6.0"
+APP_VERSION = "9.0"
 app = FastAPI(title="AI Shopify Agent", version=APP_VERSION)
 
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
@@ -397,7 +397,7 @@ def get_pexels_image(product: Dict[str, Any], niche: str) -> Tuple[Optional[str]
         try:
             r = requests.get(
                 "https://api.pexels.com/v1/search",
-                headers={"Authorization": PEXELS_API_KEY, "User-Agent": "AI-Shopify-Agent/6.0"},
+                headers={"Authorization": PEXELS_API_KEY, "User-Agent": "AI-Shopify-Agent/9.0"},
                 params={"query": query, "per_page": 15, "orientation": "square", "size": "large"},
                 timeout=60,
             )
@@ -421,7 +421,7 @@ def download_image_as_base64(url: Optional[str]) -> Optional[str]:
     if not url:
         return None
     try:
-        r = requests.get(url, timeout=90, headers={"User-Agent": "Mozilla/5.0 AI-Shopify-Agent/6.0"}, allow_redirects=True)
+        r = requests.get(url, timeout=90, headers={"User-Agent": "Mozilla/5.0 AI-Shopify-Agent/9.0"}, allow_redirects=True)
         if r.status_code != 200 or "image" not in r.headers.get("Content-Type", "").lower():
             return None
         return base64.b64encode(r.content).decode("utf-8")
@@ -643,4 +643,146 @@ def generate_products(niche: str = Query(..., min_length=2), count: int = Query(
         "products_requested": count, "products_created": products_created,
         "images_attached": images_attached, "collections_attached": collections_attached,
         "metafields_written": metafields_written, "results": results,
+    }
+
+# =========================================================
+# V9 SAAS / AUTOPILOT / OPERATIONS ENDPOINTS
+# =========================================================
+
+@app.get("/export-csv")
+def export_csv(limit: int = 500):
+    items = load_history()[-limit:]
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "created_at", "batch_id", "success", "title", "brand", "product_id",
+        "price", "compare_at_price", "sku", "product_type", "collection_name",
+        "image_attached", "collection_attached", "errors"
+    ])
+    for item in items:
+        writer.writerow([
+            now_iso(),
+            item.get("batch_id"),
+            item.get("success"),
+            item.get("title"),
+            item.get("brand"),
+            item.get("product_id"),
+            item.get("price"),
+            item.get("compare_at_price"),
+            item.get("sku"),
+            item.get("product_type"),
+            item.get("collection_name"),
+            item.get("image_attached"),
+            item.get("collection_attached"),
+            json.dumps(item.get("errors", []), ensure_ascii=False),
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=shopify_agent_history.csv"},
+    )
+
+
+@app.get("/delete-product")
+def delete_product(product_id: int):
+    try:
+        result = shopify_request("DELETE", f"products/{product_id}.json")
+        return {
+            "success": result["status_code"] in [200, 202],
+            "product_id": product_id,
+            "status": result["status_code"],
+            "response": result["body"],
+        }
+    except Exception as error:
+        return {"success": False, "product_id": product_id, "error": str(error)}
+
+
+@app.get("/retry-failed")
+def retry_failed(limit: int = 10):
+    history_items = load_history()
+    failed = [item for item in history_items if not item.get("success")][-limit:]
+    retried = []
+    for item in failed:
+        niche = item.get("product_type") or item.get("collection_name") or "general"
+        try:
+            response = generate_products(niche=niche, count=1)
+            retried.append({"original": item.get("title"), "retry": response})
+        except Exception as error:
+            retried.append({"original": item.get("title"), "error": str(error)})
+    return {"success": True, "retried_count": len(retried), "items": retried}
+
+
+@app.get("/autopilot")
+def autopilot(
+    niches: str = "fitness,skincare,home",
+    count_per_niche: int = 3,
+):
+    """
+    V9 autopilot:
+    Example:
+    /autopilot?niches=fitness,skincare,home&count_per_niche=3
+
+    Generates products across multiple niches.
+    Later this endpoint can be triggered daily by Railway cron / external scheduler.
+    """
+    niche_list = [n.strip().lower() for n in niches.split(",") if n.strip()]
+    count_per_niche = max(1, min(int(count_per_niche), 20))
+
+    runs = []
+    total_created = 0
+    total_images = 0
+    total_collections = 0
+    total_metafields = 0
+
+    for niche in niche_list:
+        result = generate_products(niche=niche, count=count_per_niche)
+        runs.append(result)
+        total_created += result.get("products_created", 0)
+        total_images += result.get("images_attached", 0)
+        total_collections += result.get("collections_attached", 0)
+        total_metafields += result.get("metafields_written", 0)
+
+    return {
+        "success": True,
+        "version": APP_VERSION,
+        "mode": "autopilot",
+        "niches": niche_list,
+        "count_per_niche": count_per_niche,
+        "total_created": total_created,
+        "total_images": total_images,
+        "total_collections": total_collections,
+        "total_metafields": total_metafields,
+        "runs": runs,
+    }
+
+
+@app.get("/saas-config")
+def saas_config():
+    """
+    V9 SaaS readiness endpoint.
+    This does not replace real auth/Stripe yet.
+    It gives the frontend a clean config object for future user accounts, plans and quotas.
+    """
+    return {
+        "success": True,
+        "version": APP_VERSION,
+        "plans": [
+            {"name": "starter", "monthly_price": 19, "product_limit": 100, "bulk_limit": 10},
+            {"name": "pro", "monthly_price": 49, "product_limit": 1000, "bulk_limit": 50},
+            {"name": "agency", "monthly_price": 149, "product_limit": 10000, "bulk_limit": 200},
+        ],
+        "features": {
+            "shopify_products": True,
+            "pexels_images": True,
+            "seo": True,
+            "collections": True,
+            "variants": True,
+            "metafields": True,
+            "history": True,
+            "csv_export": True,
+            "autopilot": True,
+            "stripe_ready": False,
+            "multi_user_ready": False,
+        },
     }
